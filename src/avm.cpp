@@ -10,6 +10,9 @@
 #include <vector>
 #include <cmath>
 #include <sys/stat.h> // For creating directories
+#ifdef _WIN32
+#include <direct.h> // For _mkdir on Windows
+#endif
 
 using namespace cv;
 using namespace std;
@@ -1284,7 +1287,11 @@ int main() {
 	// Create output directory
 	struct stat st = { 0 };
 	if (stat("build", &st) == -1) {
+#ifdef _WIN32
+		if (_mkdir("build") == 0) {
+#else
 		if (mkdir("build", 0755) == 0) {
+#endif
 			cout << "[INIT] Output directory created: build/" << endl;
 		}
 		else {

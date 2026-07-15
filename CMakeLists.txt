@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
+if(WIN32)
+    set(CMAKE_TOOLCHAIN_FILE "C:/PROJ/vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain")
+endif()
 project(avm)
 
 # Set C++ standard
