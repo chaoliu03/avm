@@ -35,12 +35,12 @@ Undistort::Undistort()
     // 构建去畸变内参矩阵
     m_intrinsic_undis = (cv::Mat_<float>(3, 3) << m_focal_length / m_dx * m_fish_scale, 0, m_fish_width / 2 * m_undis_scale, 0, m_focal_length / m_dy * m_fish_scale, m_fish_height / 2 * m_undis_scale, 0, 0, 1);
 
-    cout << "[INFO] Undistortion intrinsic matrix initialization completed" << endl;
+    cout << "[信息] 去畸变内参矩阵初始化完成" << endl;
 
     // 构建原始内参矩阵
     m_intrinsic = (cv::Mat_<float>(3, 3) << m_focal_length / m_dx, 0, m_fish_width / 2, 0, m_focal_length / m_dy, m_fish_height / 2, 0, 0, 1);
 
-    cout << "[INFO] Original intrinsic matrix initialization completed" << endl;
+    cout << "[信息] 原始内参矩阵初始化完成" << endl;
 }
 
 /**

@@ -148,7 +148,7 @@ void rotate(string src_image_path, string dst_image_path, double angle1)
     Mat image = imread(src_image_path);
     if (image.empty())
     {
-        cout << "[ERROR] Unable to read image file: " << src_image_path << endl;
+        cout << "[错误] 无法读取图像文件：" << src_image_path << endl;
         return;
     }
 
@@ -293,7 +293,7 @@ void join()
     if (img_front.empty() || img_back.empty() || img_left.empty() || img_right.empty() ||
         mask_front.empty() || mask_back.empty() || mask_left.empty() || mask_right.empty())
     {
-        cout << "[ERROR] Unable to load one or more image or mask files" << endl;
+        cout << "[错误] 无法加载一个或多个图像或遮罩文件" << endl;
         return;
     }
 
@@ -355,7 +355,7 @@ void join()
     Mat img_su7 = imread("assets/images/su7.png", IMREAD_UNCHANGED);
     if (img_su7.empty())
     {
-        cout << "[ERROR] Unable to load vehicle model image file: assets/images/su7.png" << endl;
+        cout << "[错误] 无法加载车辆模型图像文件：assets/images/su7.png" << endl;
         return;
     }
 
@@ -424,5 +424,5 @@ void join()
 
     // 保存最终结果
     imwrite("build/stitched_result_with_su7.jpg", result);
-    cout << "[SUCCESS] Panoramic stitching completed, result saved: build/stitched_result_with_su7.jpg" << endl;
+    cout << "[成功] 全景图拼接完成，结果已保存：build/stitched_result_with_su7.jpg" << endl;
 }

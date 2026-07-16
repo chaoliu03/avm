@@ -51,7 +51,7 @@ cv::Mat g_Homo_R; // 右视图单应性矩阵
 int main()
 {
     cout << "===========================================" << endl;
-    cout << "[SYSTEM] Around View Monitor (AVM) System Started" << endl;
+    cout << "[系统] 环视全景 (AVM) 系统已启动" << endl;
     cout << "===========================================" << endl;
 
     // 创建输出目录
@@ -65,11 +65,11 @@ int main()
         if (mkdir("build", 0755) == 0)
         {
 #endif
-            cout << "[INIT] Output directory created: build/" << endl;
+            cout << "[初始化] 已创建输出目录：build/" << endl;
         }
         else
         {
-            cout << "[WARNING] Unable to create output directory, will use current directory" << endl;
+            cout << "[警告] 无法创建输出目录，将使用当前目录" << endl;
         }
     }
 
@@ -97,10 +97,10 @@ int main()
     // 构建原始内参矩阵
     g_intrinsic = (cv::Mat_<float>(3, 3) << focal_length / dx, 0, fish_width / 2, 0, focal_length / dy, fish_height / 2, 0, 0, 1);
 
-    cout << "[INIT] Camera parameters initialization completed" << endl;
+    cout << "[初始化] 相机参数初始化完成" << endl;
 
     // 读取四个方向的鱼眼图像
-    cout << "[STEP 1] Reading fisheye images..." << endl;
+    cout << "[步骤 1] 正在读取鱼眼图像..." << endl;
     cv::Mat image_f = imread("assets/images/front.png");
     cv::Mat image_b = imread("assets/images/back.png");
     cv::Mat image_l = imread("assets/images/left.png");
@@ -108,13 +108,13 @@ int main()
 
     if (image_f.empty() || image_b.empty() || image_l.empty() || image_r.empty())
     {
-        cout << "[ERROR] Unable to read input image files" << endl;
+        cout << "[错误] 无法读取输入图像文件" << endl;
         return -1;
     }
-    cout << "[SUCCESS] Successfully read 4 fisheye images" << endl;
+    cout << "[成功] 成功读取 4 张鱼眼图像" << endl;
 
     // 创建去畸变处理对象
-    cout << "[STEP 2] Starting image undistortion processing..." << endl;
+    cout << "[步骤 2] 正在进行图像去畸变处理..." << endl;
     Undistort            undistort_handle;
     std::vector<cv::Mat> undis2dis_front, undis2dis_back, undis2dis_left, undis2dis_right;
 
@@ -129,10 +129,10 @@ int main()
     cv::imwrite("build/back_undis.jpg", back_undis);
     cv::imwrite("build/left_undis.jpg", left_undis);
     cv::imwrite("build/right_undis.jpg", right_undis);
-    cout << "[SUCCESS] Undistorted image processing completed and saved" << endl;
+    cout << "[成功] 去畸变图像处理完成并已保存" << endl;
 
     // 检测标定板角点
-    cout << "[STEP 3] Detecting calibration board corners..." << endl;
+    cout << "[步骤 3] 正在检测标定板角点..." << endl;
     bool success = true;
     success &= detectPoints(image_f, 20000, 0.5, g_corner_front, 0, ImageType::IMAGE_FRONT);
     success &= detectPoints(image_b, 20000, 0.5, g_corner_back, 0, ImageType::IMAGE_BACK);
@@ -141,11 +141,11 @@ int main()
 
     if (!success)
     {
-        cout << "[WARNING] Some corner detection failed, continuing processing..." << endl;
+        cout << "[警告] 部分角点检测失败，继续处理..." << endl;
     }
     else
     {
-        cout << "[SUCCESS] All directional corner detection completed" << endl;
+        cout << "[成功] 所有方向的角点检测已完成" << endl;
     }
 
     // 在去畸变图像上标记检测到的角点
@@ -162,7 +162,7 @@ int main()
     cv::imwrite("build/back_undis_1.jpg", back_undis);
     cv::imwrite("build/left_undis_1.jpg", left_undis);
     cv::imwrite("build/right_undis_1.jpg", right_undis);
-    cout << "[SUCCESS] Corner-marked images saved" << endl;
+    cout << "[成功] 角点标记图像已保存" << endl;
 
     // 初始化鸟瞰图参数
     init_params();
@@ -174,15 +174,15 @@ int main()
     cv::Mat undisimage_r = imread("build/right_undis.jpg");
 
     // 计算单应性矩阵
-    cout << "[STEP 4] Calculating perspective transformation matrices..." << endl;
+    cout << "[步骤 4] 正在计算透视变换矩阵..." << endl;
     g_Homo_F = cv::findHomography(g_corner_front, g_corner_bird_front, 0);
     g_Homo_B = cv::findHomography(g_corner_back, g_corner_bird_back, 0);
     g_Homo_L = cv::findHomography(g_corner_left, g_corner_bird_left, 0);
     g_Homo_R = cv::findHomography(g_corner_right, g_corner_bird_right, 0);
-    cout << "[SUCCESS] Perspective transformation matrices calculation completed" << endl;
+    cout << "[成功] 透视变换矩阵计算完成" << endl;
 
     // 执行透视变换生成鸟瞰图
-    cout << "[STEP 5] Generating bird's eye view..." << endl;
+    cout << "[步骤 5] 正在生成鸟瞰图..." << endl;
     cv::Mat bird_front_image, bird_back_image, bird_left_image, bird_right_image;
 
     cv::warpPerspective(undisimage_f, bird_front_image, g_Homo_F, cv::Size(792, 305), cv::INTER_LINEAR);
@@ -195,22 +195,22 @@ int main()
     cv::imwrite("build/bird_back.jpg", bird_back_image);
     cv::imwrite("build/bird_left.jpg", bird_left_image);
     cv::imwrite("build/bird_right.jpg", bird_right_image);
-    cout << "[SUCCESS] Bird's eye view generation completed" << endl;
+    cout << "[成功] 鸟瞰图生成已完成" << endl;
 
     // 旋转鸟瞰图以纠正朝向
-    cout << "[STEP 6] Adjusting bird's eye view orientation..." << endl;
+    cout << "[步骤 6] 正在调整鸟瞰图朝向..." << endl;
     rotate("build/bird_front.jpg", "build/bird_front_2.jpg", 0);
     rotate("build/bird_back.jpg", "build/bird_back_2.jpg", 180);
     rotate("build/bird_left.jpg", "build/bird_left_2.jpg", 90);
     rotate("build/bird_right.jpg", "build/bird_right_2.jpg", -90);
-    cout << "[SUCCESS] Bird's eye view orientation adjustment completed" << endl;
+    cout << "[成功] 鸟瞰图朝向调整已完成" << endl;
 
     // 执行全景拼接
-    cout << "[STEP 7] Performing panoramic image stitching..." << endl;
+    cout << "[步骤 7] 正在执行全景图像拼接..." << endl;
     join();
 
     cout << "===========================================" << endl;
-    cout << "[SYSTEM] Around View Monitor system processing completed" << endl;
+    cout << "[系统] 环视全景系统处理完成" << endl;
     cout << "===========================================" << endl;
     return 0;
 }
