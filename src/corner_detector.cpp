@@ -4,6 +4,7 @@
  */
 
 #include "corner_detector.h"
+#include "utils.h"
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <cmath>
@@ -504,7 +505,7 @@ cv::Vec2f warpFisheye2Undist(float fish_scale, float f_dx, float f_dy, float und
  * @param src_image_type 源图像类型
  * @return 是否成功检测到 8 个角点
  */
-bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::vector<cv::Point2f>& detect_points, int fish_undis_flag, ImageType src_image_type)
+bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::vector<cv::Point2f>& detect_points, int fish_undis_flag, ImageType src_image_type, cv::Mat* out_contrast, cv::Mat* out_thresh)
 {
     float fish_scale = config.fish_scale;
 
@@ -523,23 +524,9 @@ bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::ve
     float   contrast     = 2.5f;
     cv::Mat img_contrast = imgAugForPointDetect(img, contrast);
 
-    // 保存增强后的图像用于调试
-    switch (src_image_type)
+    if (out_contrast)
     {
-    case ImageType::IMAGE_FRONT:
-        cv::imwrite(OUTPUT_DIR + "/front_img_contrast.jpg", img_contrast);
-        break;
-    case ImageType::IMAGE_BACK:
-        cv::imwrite(OUTPUT_DIR + "/back_img_contrast.jpg", img_contrast);
-        break;
-    case ImageType::IMAGE_LEFT:
-        cv::imwrite(OUTPUT_DIR + "/left_img_contrast.jpg", img_contrast);
-        break;
-    case ImageType::IMAGE_RIGHT:
-        cv::imwrite(OUTPUT_DIR + "/right_img_contrast.jpg", img_contrast);
-        break;
-    default:
-        cv::imwrite(OUTPUT_DIR + "/img_contrast.jpg", img_contrast);
+        *out_contrast = img_contrast.clone();
     }
 
     // 基于直方图的二值化
@@ -563,23 +550,9 @@ bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::ve
         cv::circle(img_thresh, detect_points[i], 1, cv::Scalar(0, 255, 0), 5);
     }
 
-    // 保存二值化结果
-    switch (src_image_type)
+    if (out_thresh)
     {
-    case ImageType::IMAGE_FRONT:
-        cv::imwrite(OUTPUT_DIR + "/front_img_thresh.jpg", img_thresh);
-        break;
-    case ImageType::IMAGE_BACK:
-        cv::imwrite(OUTPUT_DIR + "/back_img_thresh.jpg", img_thresh);
-        break;
-    case ImageType::IMAGE_LEFT:
-        cv::imwrite(OUTPUT_DIR + "/left_img_thresh.jpg", img_thresh);
-        break;
-    case ImageType::IMAGE_RIGHT:
-        cv::imwrite(OUTPUT_DIR + "/right_img_thresh.jpg", img_thresh);
-        break;
-    default:
-        cv::imwrite(OUTPUT_DIR + "/img_thresh.jpg", img_thresh);
+        *out_thresh = img_thresh.clone();
     }
 
     // 检查是否成功检测到 8 个角点

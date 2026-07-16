@@ -272,13 +272,13 @@ cv::Mat ImageMergeWithMask(cv::Mat& src_image, cv::Mat& mask_image, cv::Mat& des
  * @brief 全景图拼接主函数
  * @description 将四个方向的鸟瞰图拼接成一张完整的全景图并叠加车辆模型
  */
-void join()
+cv::Mat join(const cv::Mat& bird_front, const cv::Mat& bird_back, const cv::Mat& bird_left, const cv::Mat& bird_right)
 {
-    // 读取四路鸟瞰图
-    Mat img_front = imread(OUTPUT_DIR + "/bird_front_2.jpg");
-    Mat img_back  = imread(OUTPUT_DIR + "/bird_back_2.jpg");
-    Mat img_left  = imread(OUTPUT_DIR + "/bird_left_2.jpg");
-    Mat img_right = imread(OUTPUT_DIR + "/bird_right_2.jpg");
+    // 使用内存中的四路鸟瞰图
+    Mat img_front = bird_front.clone();
+    Mat img_back  = bird_back.clone();
+    Mat img_left  = bird_left.clone();
+    Mat img_right = bird_right.clone();
 
     // 缩放图像以适应拼接
     cv::resize(img_front, img_front, cv::Size(616, 237));
@@ -295,7 +295,7 @@ void join()
         mask_front.empty() || mask_back.empty() || mask_left.empty() || mask_right.empty())
     {
         cout << "[错误] 无法加载一个或多个图像或遮罩文件" << endl;
-        return;
+        return cv::Mat();
     }
 
     // 将遮罩图像归一化到 [0,1] 范围
@@ -357,7 +357,7 @@ void join()
     if (img_su7.empty())
     {
         cout << "[错误] 无法加载车辆模型图像文件：assets/images/su7.png" << endl;
-        return;
+        return cv::Mat();
     }
 
     // 将车辆模型旋转 90 度（逆时针）
@@ -424,8 +424,9 @@ void join()
     roi_su7_float.convertTo(roi_su7, CV_8UC3);
 
     // 保存最终结果
-    imwrite(OUTPUT_DIR + "/stitched_result_with_su7.jpg", result);
-    cout << "[成功] 全景图拼接完成，结果已保存：" << OUTPUT_DIR << "/stitched_result_with_su7.jpg" << endl;
+    imwrite(OUTPUT_DIR + utf8_to_gbk("/6_全景拼接效果.jpg"), result);
+    cout << "[成功] 全景图拼接完成，结果已保存：" << OUTPUT_DIR << "/6_全景拼接效果.jpg" << endl;
+    return result;
 }
 
 
@@ -480,18 +481,29 @@ static void onMouse(int event, int x, int y, int flags, void* userdata)
 
 cv::Mat getUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv::Mat& left, const cv::Mat& right)
 {
+    // 确保所有输入都是 3 通道图像，支持单通道（灰度/二值）图像输入并自动转换
+    cv::Mat f_c3 = front.channels() == 1 ? cv::Mat() : front;
+    cv::Mat b_c3 = back.channels() == 1 ? cv::Mat() : back;
+    cv::Mat l_c3 = left.channels() == 1 ? cv::Mat() : left;
+    cv::Mat r_c3 = right.channels() == 1 ? cv::Mat() : right;
+
+    if (front.channels() == 1) cv::cvtColor(front, f_c3, cv::COLOR_GRAY2BGR);
+    if (back.channels() == 1) cv::cvtColor(back, b_c3, cv::COLOR_GRAY2BGR);
+    if (left.channels() == 1) cv::cvtColor(left, l_c3, cv::COLOR_GRAY2BGR);
+    if (right.channels() == 1) cv::cvtColor(right, r_c3, cv::COLOR_GRAY2BGR);
+
     // 获取相机原始尺寸（不进行像素压缩，保留 100% 细节）
-    int w = front.cols;
-    int h = front.rows;
+    int w = f_c3.cols;
+    int h = f_c3.rows;
 
     // 旋转左右侧视图以纠正朝向，使得车头方向均朝上，车身均朝向中心：
     // 左侧视图顺时针旋转 90 度，尺寸变为 h x w
     cv::Mat l_rotated;
-    cv::rotate(left, l_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+    cv::rotate(l_c3, l_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
 
     // 右侧视图逆时针旋转 90 度，尺寸变为 h x w
     cv::Mat r_rotated;
-    cv::rotate(right, r_rotated, cv::ROTATE_90_CLOCKWISE);
+    cv::rotate(r_c3, r_rotated, cv::ROTATE_90_CLOCKWISE);
 
     // 计算高分辨率十字画布尺寸：
     // 总宽度 = 左侧宽(h) + 中间宽(w) + 右侧宽(h)
@@ -501,7 +513,7 @@ cv::Mat getUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv
     cv::Mat canvas(canvas_h, canvas_w, CV_8UC3, cv::Scalar(40, 40, 40));
 
     // 拼入前视图 (中上)
-    front.copyTo(canvas(cv::Rect(h, 0, w, h)));
+    f_c3.copyTo(canvas(cv::Rect(h, 0, w, h)));
 
     // 拼入左视图 (左中)
     l_rotated.copyTo(canvas(cv::Rect(0, h, h, w)));
@@ -510,7 +522,7 @@ cv::Mat getUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv
     r_rotated.copyTo(canvas(cv::Rect(h + w, h, h, w)));
 
     // 拼入后视图 (中下)
-    back.copyTo(canvas(cv::Rect(h, h + w, w, h)));
+    b_c3.copyTo(canvas(cv::Rect(h, h + w, w, h)));
 
     return canvas;
 }
@@ -531,4 +543,23 @@ void showInteractive(const cv::Mat& canvas, PanZoomState& state)
 
     // 绘制初始图像
     state.update_display();
+}
+
+cv::Mat getBirdStitched(const cv::Mat& front, const cv::Mat& back, const cv::Mat& left, const cv::Mat& right)
+{
+    cv::Mat l_rotated, r_rotated, b_rotated;
+    cv::rotate(back, b_rotated, cv::ROTATE_180);
+    cv::rotate(left, l_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+    cv::rotate(right, r_rotated, cv::ROTATE_90_CLOCKWISE);
+
+    int canvas_w = 281 + 792 + 281;
+    int canvas_h = 305 + 1131 + 305;
+    cv::Mat canvas(canvas_h, canvas_w, CV_8UC3, cv::Scalar(40, 40, 40));
+
+    front.copyTo(canvas(cv::Rect(281, 0, 792, 305)));
+    l_rotated.copyTo(canvas(cv::Rect(0, 305, 281, 1131)));
+    r_rotated.copyTo(canvas(cv::Rect(281 + 792, 305, 281, 1131)));
+    b_rotated.copyTo(canvas(cv::Rect(281, 305 + 1131, 792, 305)));
+
+    return canvas;
 }

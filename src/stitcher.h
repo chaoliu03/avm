@@ -33,11 +33,7 @@ struct PanZoomState
     }
 };
 
-/**
- * @brief 全景图拼接主函数
- * @description 将四个方向的鸟瞰图拼接成一张完整的全景图并叠加车辆模型
- */
-void join();
+cv::Mat join(const cv::Mat& img_front, const cv::Mat& img_back, const cv::Mat& img_left, const cv::Mat& img_right);
 
 /**
  * @brief 将四张去畸变图像按十字方位进行高清无损拼接，并返回大画布图像
@@ -55,5 +51,15 @@ cv::Mat getUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv
  * @param state 交互状态对象引用
  */
 void showInteractive(const cv::Mat& canvas, PanZoomState& state);
+
+/**
+ * @brief 将四张不同分辨率的鸟瞰图按照方位拼合成一个鸟瞰大图
+ * @param front 前向鸟瞰图
+ * @param back 后向鸟瞰图
+ * @param left 左侧鸟瞰图
+ * @param right 右侧鸟瞰图
+ * @return 拼接后的鸟瞰图大图
+ */
+cv::Mat getBirdStitched(const cv::Mat& front, const cv::Mat& back, const cv::Mat& left, const cv::Mat& right);
 
 #endif // AVM_STITCHER_H

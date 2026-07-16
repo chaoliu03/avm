@@ -124,10 +124,9 @@ int main()
     cv::Mat clean_left  = left_undis.clone();
     cv::Mat clean_right = right_undis.clone();
 
-
     // 拼接四张去畸变图像方位并进行显示
     cv::Mat stitched_undis = getUndistortStitched(clean_front, clean_back, clean_left, clean_right);
-    cv::imwrite(OUTPUT_DIR + utf8_to_gbk("/畸变矫正.jpg"), stitched_undis);
+    cv::imwrite(OUTPUT_DIR + utf8_to_gbk("/1_畸变矫正.jpg"), stitched_undis);
 
     PanZoomState state;
     showInteractive(stitched_undis, state);
@@ -135,11 +134,13 @@ int main()
 
     // 检测标定板角点
     cout << "[步骤 3] 正在检测标定板角点..." << endl;
+    cv::Mat contrast_f, contrast_b, contrast_l, contrast_r;
+    cv::Mat thresh_f, thresh_b, thresh_l, thresh_r;
     bool success = true;
-    success &= detectPoints(image_f, 20000, g_default_camera_config, g_corner_front, 0, ImageType::IMAGE_FRONT);
-    success &= detectPoints(image_b, 20000, g_default_camera_config, g_corner_back, 0, ImageType::IMAGE_BACK);
-    success &= detectPoints(image_l, 20000, g_default_camera_config, g_corner_left, 0, ImageType::IMAGE_LEFT);
-    success &= detectPoints(image_r, 20000, g_default_camera_config, g_corner_right, 0, ImageType::IMAGE_RIGHT);
+    success &= detectPoints(image_f, 20000, g_default_camera_config, g_corner_front, 0, ImageType::IMAGE_FRONT, &contrast_f, &thresh_f);
+    success &= detectPoints(image_b, 20000, g_default_camera_config, g_corner_back, 0, ImageType::IMAGE_BACK, &contrast_b, &thresh_b);
+    success &= detectPoints(image_l, 20000, g_default_camera_config, g_corner_left, 0, ImageType::IMAGE_LEFT, &contrast_l, &thresh_l);
+    success &= detectPoints(image_r, 20000, g_default_camera_config, g_corner_right, 0, ImageType::IMAGE_RIGHT, &contrast_r, &thresh_r);
 
     if (!success)
     {
@@ -151,6 +152,13 @@ int main()
     else
     {
         cout << "[成功] 所有方向的角点检测已完成" << endl;
+
+        // 拼合增强对比图与二值化阈值图并保存为单一图像
+        cv::Mat stitched_contrast = getUndistortStitched(contrast_f, contrast_b, contrast_l, contrast_r);
+        cv::imwrite(OUTPUT_DIR + utf8_to_gbk("/2_对比度增强.jpg"), stitched_contrast);
+
+        cv::Mat stitched_thresh = getUndistortStitched(thresh_f, thresh_b, thresh_l, thresh_r);
+        cv::imwrite(OUTPUT_DIR + utf8_to_gbk("/3_二值化阈值.jpg"), stitched_thresh);
     }
 
     // 在去畸变图像上标记检测到的角点
@@ -162,11 +170,9 @@ int main()
         circle(right_undis, g_corner_right[j], 3, cv::Scalar(0, 255, 0), 1);
     }
 
-    // 保存标记了角点的图像
-    cv::imwrite(OUTPUT_DIR + "/front_undis_1.jpg", front_undis);
-    cv::imwrite(OUTPUT_DIR + "/back_undis_1.jpg", back_undis);
-    cv::imwrite(OUTPUT_DIR + "/left_undis_1.jpg", left_undis);
-    cv::imwrite(OUTPUT_DIR + "/right_undis_1.jpg", right_undis);
+    // 保存标记了角点的图像 (拼合在一起保存)
+    cv::Mat stitched_undis_corners = getUndistortStitched(front_undis, back_undis, left_undis, right_undis);
+    cv::imwrite(OUTPUT_DIR + utf8_to_gbk("/4_角点标记.jpg"), stitched_undis_corners);
     cout << "[成功] 角点标记图像已保存" << endl;
 
     // 初始化鸟瞰图参数
@@ -189,24 +195,29 @@ int main()
     cv::warpPerspective(clean_left, bird_left_image, g_Homo_L, cv::Size(1131, 281), cv::INTER_CUBIC);
     cv::warpPerspective(clean_right, bird_right_image, g_Homo_R, cv::Size(1131, 281), cv::INTER_CUBIC);
 
-    // 保存初始鸟瞰图图像
-    cv::imwrite(OUTPUT_DIR + "/bird_front.jpg", bird_front_image);
-    cv::imwrite(OUTPUT_DIR + "/bird_back.jpg", bird_back_image);
-    cv::imwrite(OUTPUT_DIR + "/bird_left.jpg", bird_left_image);
-    cv::imwrite(OUTPUT_DIR + "/bird_right.jpg", bird_right_image);
-    cout << "[成功] 鸟瞰图生成已完成" << endl;
+    // 拼合初始鸟瞰图图像并保存为单一图像
+    cv::Mat stitched_bird = getBirdStitched(bird_front_image, bird_back_image, bird_left_image, bird_right_image);
+    cv::imwrite(OUTPUT_DIR + utf8_to_gbk("/5_鸟瞰图拼接.jpg"), stitched_bird);
+    cout << "[成功] 鸟瞰图生成及拼合已完成" << endl;
 
-    // 旋转鸟瞰图以纠正朝向
+    // 旋转鸟瞰图以纠正朝向 (完全在内存中完成，不需要写入/读取磁盘)
     cout << "[步骤 6] 正在调整鸟瞰图朝向..." << endl;
-    rotate(OUTPUT_DIR + "/bird_front.jpg", OUTPUT_DIR + "/bird_front_2.jpg", 0);
-    rotate(OUTPUT_DIR + "/bird_back.jpg", OUTPUT_DIR + "/bird_back_2.jpg", 180);
-    rotate(OUTPUT_DIR + "/bird_left.jpg", OUTPUT_DIR + "/bird_left_2.jpg", 90);
-    rotate(OUTPUT_DIR + "/bird_right.jpg", OUTPUT_DIR + "/bird_right_2.jpg", -90);
+    cv::Mat bird_front_rotated = bird_front_image.clone();
+    cv::Mat bird_back_rotated;
+    cv::rotate(bird_back_image, bird_back_rotated, cv::ROTATE_180);
+    cv::Mat bird_left_rotated;
+    cv::rotate(bird_left_image, bird_left_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+    cv::Mat bird_right_rotated;
+    cv::rotate(bird_right_image, bird_right_rotated, cv::ROTATE_90_CLOCKWISE);
     cout << "[成功] 鸟瞰图朝向调整已完成" << endl;
 
     // 执行全景拼接
     cout << "[步骤 7] 正在执行全景图像拼接..." << endl;
-    join();
+    cv::Mat final_result = join(bird_front_rotated, bird_back_rotated, bird_left_rotated, bird_right_rotated);
+
+    // 显示拼接后的全景图
+    PanZoomState final_state;
+    showInteractive(final_result, final_state);
 
     cout << "===========================================" << endl;
     cout << "[系统] 环视全景系统处理完成" << endl;
@@ -214,7 +225,7 @@ int main()
 
     cv::waitKey(0);
 
-    // 销毁窗口安全保护
+    // 销毁去畸变展示窗口安全保护
     try
     {
         if (!state.window_name.empty())
@@ -224,7 +235,20 @@ int main()
     }
     catch (const cv::Exception&)
     {
-        // 捕获并忽略 OpenCV 异常（如窗口已被用户手动关闭的情况）
+        // 捕获并忽略 OpenCV 异常
+    }
+
+    // 销毁全景图展示窗口安全保护
+    try
+    {
+        if (!final_state.window_name.empty())
+        {
+            cv::destroyWindow(final_state.window_name);
+        }
+    }
+    catch (const cv::Exception&)
+    {
+        // 捕获并忽略 OpenCV 异常
     }
 
     return 0;

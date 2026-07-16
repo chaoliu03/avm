@@ -19,7 +19,7 @@
  * @param src_image_type 源图像类型
  * @return 是否成功检测到 8 个角点
  */
-bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::vector<cv::Point2f>& detect_points, int fish_undis_flag, ImageType src_image_type);
+bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::vector<cv::Point2f>& detect_points, int fish_undis_flag, ImageType src_image_type, cv::Mat* out_contrast = nullptr, cv::Mat* out_thresh = nullptr);
 
 // 辅助检测与图像增强函数声明
 cv::Mat imgAugForPointDetect(const cv::Mat img, float contrast);
