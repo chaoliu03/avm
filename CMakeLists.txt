@@ -29,7 +29,7 @@ message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # 添加头文件目录
-include_directories(include)
+include_directories(src)
 
 # 收集源文件
 file(GLOB_RECURSE SOURCES "src/*.cpp")
