@@ -23,7 +23,7 @@ using namespace cv;
 
 // 全局默认相机配置定义
 const CameraConfig g_default_camera_config(
-    0.5f,                                                       // fish_scale
+    0.43f,                                                      // fish_scale
     910.0f,                                                     // focal_length
     3.0f,                                                       // dx
     3.0f,                                                       // dy
@@ -65,16 +65,16 @@ int main()
 
     // 创建输出目录
     struct stat st = {0};
-    if (stat("build", &st) == -1)
+    if (stat(OUTPUT_DIR.c_str(), &st) == -1)
     {
 #ifdef _WIN32
-        if (_mkdir("build") == 0)
+        if (_mkdir(OUTPUT_DIR.c_str()) == 0)
         {
 #else
-        if (mkdir("build", 0755) == 0)
+        if (mkdir(OUTPUT_DIR.c_str(), 0755) == 0)
         {
 #endif
-            cout << "[初始化] 已创建输出目录：build/" << endl;
+            cout << "[初始化] 已创建输出目录：" << OUTPUT_DIR << "/" << endl;
         }
         else
         {
@@ -135,7 +135,10 @@ int main()
 
     if (!success)
     {
-        cout << "[警告] 部分角点检测失败，继续处理..." << endl;
+        cout << "[错误] 部分方向的标定板角点检测失败！" << endl;
+        cout << "[提示] 请检查 `fish_scale` 缩放因子设置是否过小（当前为 " << g_default_camera_config.fish_scale
+             << "f，导致标定板图案过小而无法识别）。建议将 `fish_scale` 设置为 0.42f ~ 0.50f 之间。" << endl;
+        return -1;
     }
     else
     {
@@ -152,10 +155,10 @@ int main()
     }
 
     // 保存标记了角点的图像
-    cv::imwrite("build/front_undis_1.jpg", front_undis);
-    cv::imwrite("build/back_undis_1.jpg", back_undis);
-    cv::imwrite("build/left_undis_1.jpg", left_undis);
-    cv::imwrite("build/right_undis_1.jpg", right_undis);
+    cv::imwrite(OUTPUT_DIR + "/front_undis_1.jpg", front_undis);
+    cv::imwrite(OUTPUT_DIR + "/back_undis_1.jpg", back_undis);
+    cv::imwrite(OUTPUT_DIR + "/left_undis_1.jpg", left_undis);
+    cv::imwrite(OUTPUT_DIR + "/right_undis_1.jpg", right_undis);
     cout << "[成功] 角点标记图像已保存" << endl;
 
     // 初始化鸟瞰图参数
@@ -179,18 +182,18 @@ int main()
     cv::warpPerspective(clean_right, bird_right_image, g_Homo_R, cv::Size(1131, 281), cv::INTER_LINEAR);
 
     // 保存初始鸟瞰图图像
-    cv::imwrite("build/bird_front.jpg", bird_front_image);
-    cv::imwrite("build/bird_back.jpg", bird_back_image);
-    cv::imwrite("build/bird_left.jpg", bird_left_image);
-    cv::imwrite("build/bird_right.jpg", bird_right_image);
+    cv::imwrite(OUTPUT_DIR + "/bird_front.jpg", bird_front_image);
+    cv::imwrite(OUTPUT_DIR + "/bird_back.jpg", bird_back_image);
+    cv::imwrite(OUTPUT_DIR + "/bird_left.jpg", bird_left_image);
+    cv::imwrite(OUTPUT_DIR + "/bird_right.jpg", bird_right_image);
     cout << "[成功] 鸟瞰图生成已完成" << endl;
 
     // 旋转鸟瞰图以纠正朝向
     cout << "[步骤 6] 正在调整鸟瞰图朝向..." << endl;
-    rotate("build/bird_front.jpg", "build/bird_front_2.jpg", 0);
-    rotate("build/bird_back.jpg", "build/bird_back_2.jpg", 180);
-    rotate("build/bird_left.jpg", "build/bird_left_2.jpg", 90);
-    rotate("build/bird_right.jpg", "build/bird_right_2.jpg", -90);
+    rotate(OUTPUT_DIR + "/bird_front.jpg", OUTPUT_DIR + "/bird_front_2.jpg", 0);
+    rotate(OUTPUT_DIR + "/bird_back.jpg", OUTPUT_DIR + "/bird_back_2.jpg", 180);
+    rotate(OUTPUT_DIR + "/bird_left.jpg", OUTPUT_DIR + "/bird_left_2.jpg", 90);
+    rotate(OUTPUT_DIR + "/bird_right.jpg", OUTPUT_DIR + "/bird_right_2.jpg", -90);
     cout << "[成功] 鸟瞰图朝向调整已完成" << endl;
 
     // 执行全景拼接

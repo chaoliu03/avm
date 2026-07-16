@@ -54,3 +54,4 @@ Thumbs.db
 # But still ignore the executable in bin directory
 build/bin/
 build
+output

@@ -527,19 +527,19 @@ bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::ve
     switch (src_image_type)
     {
     case ImageType::IMAGE_FRONT:
-        cv::imwrite("build/front_img_contrast.jpg", img_contrast);
+        cv::imwrite(OUTPUT_DIR + "/front_img_contrast.jpg", img_contrast);
         break;
     case ImageType::IMAGE_BACK:
-        cv::imwrite("build/back_img_contrast.jpg", img_contrast);
+        cv::imwrite(OUTPUT_DIR + "/back_img_contrast.jpg", img_contrast);
         break;
     case ImageType::IMAGE_LEFT:
-        cv::imwrite("build/left_img_contrast.jpg", img_contrast);
+        cv::imwrite(OUTPUT_DIR + "/left_img_contrast.jpg", img_contrast);
         break;
     case ImageType::IMAGE_RIGHT:
-        cv::imwrite("build/right_img_contrast.jpg", img_contrast);
+        cv::imwrite(OUTPUT_DIR + "/right_img_contrast.jpg", img_contrast);
         break;
     default:
-        cv::imwrite("build/img_contrast.jpg", img_contrast);
+        cv::imwrite(OUTPUT_DIR + "/img_contrast.jpg", img_contrast);
     }
 
     // 基于直方图的二值化
@@ -567,19 +567,19 @@ bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::ve
     switch (src_image_type)
     {
     case ImageType::IMAGE_FRONT:
-        cv::imwrite("build/front_img_thresh.jpg", img_thresh);
+        cv::imwrite(OUTPUT_DIR + "/front_img_thresh.jpg", img_thresh);
         break;
     case ImageType::IMAGE_BACK:
-        cv::imwrite("build/back_img_thresh.jpg", img_thresh);
+        cv::imwrite(OUTPUT_DIR + "/back_img_thresh.jpg", img_thresh);
         break;
     case ImageType::IMAGE_LEFT:
-        cv::imwrite("build/left_img_thresh.jpg", img_thresh);
+        cv::imwrite(OUTPUT_DIR + "/left_img_thresh.jpg", img_thresh);
         break;
     case ImageType::IMAGE_RIGHT:
-        cv::imwrite("build/right_img_thresh.jpg", img_thresh);
+        cv::imwrite(OUTPUT_DIR + "/right_img_thresh.jpg", img_thresh);
         break;
     default:
-        cv::imwrite("build/img_thresh.jpg", img_thresh);
+        cv::imwrite(OUTPUT_DIR + "/img_thresh.jpg", img_thresh);
     }
 
     // 检查是否成功检测到 8 个角点

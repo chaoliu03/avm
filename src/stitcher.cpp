@@ -312,10 +312,10 @@ cv::Mat ImageMergeWithMask(cv::Mat& src_image, cv::Mat& mask_image, cv::Mat& des
 void join()
 {
     // 读取四路鸟瞰图
-    Mat img_front = imread("build/bird_front_2.jpg");
-    Mat img_back  = imread("build/bird_back_2.jpg");
-    Mat img_left  = imread("build/bird_left_2.jpg");
-    Mat img_right = imread("build/bird_right_2.jpg");
+    Mat img_front = imread(OUTPUT_DIR + "/bird_front_2.jpg");
+    Mat img_back  = imread(OUTPUT_DIR + "/bird_back_2.jpg");
+    Mat img_left  = imread(OUTPUT_DIR + "/bird_left_2.jpg");
+    Mat img_right = imread(OUTPUT_DIR + "/bird_right_2.jpg");
 
     // 缩放图像以适应拼接
     cv::resize(img_front, img_front, cv::Size(616, 237));
@@ -461,8 +461,8 @@ void join()
     roi_su7_float.convertTo(roi_su7, CV_8UC3);
 
     // 保存最终结果
-    imwrite("build/stitched_result_with_su7.jpg", result);
-    cout << "[成功] 全景图拼接完成，结果已保存：build/stitched_result_with_su7.jpg" << endl;
+    imwrite(OUTPUT_DIR + "/stitched_result_with_su7.jpg", result);
+    cout << "[成功] 全景图拼接完成，结果已保存：" << OUTPUT_DIR << "/stitched_result_with_su7.jpg" << endl;
 }
 
 // 图像交互缩放与拖拽状态结构体

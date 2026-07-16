@@ -14,6 +14,9 @@
 #define IMAGE_BACK_PIXEL_Y  643 // 拼接结果中后视图图像的 Y 轴偏移量
 #define IMAGE_RIGHT_PIXEL_X 398 // 拼接结果中右视图图像的 X 轴偏移量
 
+// 输出图片文件夹常量
+const std::string OUTPUT_DIR = "output";
+
 // 相机配置参数结构体
 struct CameraConfig
 {
@@ -48,10 +51,19 @@ struct CameraConfig
         , dy(dy_)
         , fish_width(fw)
         , fish_height(fh)
-        , undis_scale(us)
         , fish2undis_params(f2u)
         , undis2fish_params(u2f)
-    {}
+    {
+        // 动态自适应计算去畸变缩放因子，实现图像处理无损（不压缩像素）
+        if (fs > 0.0f)
+        {
+            undis_scale = 1.55f * (0.5f / fs);
+        }
+        else
+        {
+            undis_scale = us;
+        }
+    }
 
     // 计算去畸变内参矩阵
     cv::Mat getIntrinsicUndis() const
