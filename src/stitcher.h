@@ -50,7 +50,7 @@ cv::Mat getUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv
  * @param canvas 待显示的大画布图像
  * @param state 交互状态对象引用
  */
-void showInteractive(const cv::Mat& canvas, PanZoomState& state);
+void showInteractive(const cv::Mat& canvas, PanZoomState& state, const std::string& title);
 
 /**
  * @brief 将四张不同分辨率的鸟瞰图按照方位拼合成一个鸟瞰大图

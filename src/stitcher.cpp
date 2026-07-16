@@ -527,10 +527,10 @@ cv::Mat getUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv
     return canvas;
 }
 
-void showInteractive(const cv::Mat& canvas, PanZoomState& state)
+void showInteractive(const cv::Mat& canvas, PanZoomState& state, const std::string& title)
 {
     state.canvas      = canvas;
-    state.window_name = utf8_to_gbk("去畸变方位拼接展示 (鼠标滚轮缩放，左键拖拽平移，按任意键继续)");
+    state.window_name = utf8_to_gbk(title);
 
     // 设置初始缩放比例：将原始高分辨率画布等比缩放到 1000x1000 视口中显示
     state.scale  = 1000.0 / canvas.cols;
