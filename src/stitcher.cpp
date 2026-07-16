@@ -478,9 +478,15 @@ struct PanZoomState
 
     void update_display()
     {
+        // 获取窗口当前的实际图像显示区域大小，从而进行自适应分辨率的 warp 映射
+        cv::Rect rect = cv::getWindowImageRect(window_name);
+        int win_w = rect.width > 0 ? rect.width : 1000;
+        int win_h = rect.height > 0 ? rect.height : 1000;
+
         cv::Mat display_img;
         cv::Mat M = (cv::Mat_<double>(2, 3) << scale, 0, offset.x, 0, scale, offset.y);
-        cv::warpAffine(canvas, display_img, M, canvas.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(40, 40, 40));
+        // 从原始高清大画布直接 warp 到窗口所占的分辨率大小，保证像素不被压缩，且缩放平移极致流畅
+        cv::warpAffine(canvas, display_img, M, cv::Size(win_w, win_h), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(40, 40, 40));
         cv::imshow(window_name, display_img);
     }
 };
@@ -518,12 +524,12 @@ static void onMouse(int event, int x, int y, int flags, void* userdata)
         int    delta  = cv::getMouseWheelDelta(flags);
         double factor = (delta > 0) ? 1.1 : 0.9;
 
-        // 限制缩放比例在 0.1 到 10.0 之间
+        // 限制缩放比例在 0.05 到 15.0 之间
         double new_scale = state->scale * factor;
-        if (new_scale < 0.1)
-            new_scale = 0.1;
-        if (new_scale > 10.0)
-            new_scale = 10.0;
+        if (new_scale < 0.05)
+            new_scale = 0.05;
+        if (new_scale > 15.0)
+            new_scale = 15.0;
 
         // 以当前鼠标指针所在的窗口位置为中心进行平滑缩放
         cv::Point2d mouse_pos(x, y);
@@ -536,55 +542,50 @@ static void onMouse(int event, int x, int y, int flags, void* userdata)
 
 void showUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv::Mat& left, const cv::Mat& right)
 {
-    // 缩放单张图尺寸（原图较宽，缩放 4 倍为 496 x 372）
-    int w = front.cols / 4;
-    int h = front.rows / 4;
-
-    cv::Mat f_resized, b_resized, l_resized, r_resized;
-    cv::resize(front, f_resized, cv::Size(w, h));
-    cv::resize(back, b_resized, cv::Size(w, h));
-    cv::resize(left, l_resized, cv::Size(w, h));
-    cv::resize(right, r_resized, cv::Size(w, h));
+    // 获取相机原始尺寸（不进行像素压缩，保留 100% 细节）
+    int w = front.cols;
+    int h = front.rows;
 
     // 旋转左右侧视图以纠正朝向，使得车头方向均朝上，车身均朝向中心：
-    // 左侧视图顺时针旋转 90 度，尺寸变为 h x w (372 x 496)
+    // 左侧视图顺时针旋转 90 度，尺寸变为 h x w
     cv::Mat l_rotated;
-    // cv::rotate(l_resized, l_rotated, cv::ROTATE_90_CLOCKWISE);
-    cv::rotate(l_resized, l_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+    cv::rotate(left, l_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
 
-    // 右侧视图逆时针旋转 90 度，尺寸变为 h x w (372 x 496)
+    // 右侧视图逆时针旋转 90 度，尺寸变为 h x w
     cv::Mat r_rotated;
-    // cv::rotate(r_resized, r_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
-    cv::rotate(r_resized, r_rotated, cv::ROTATE_90_CLOCKWISE);
+    cv::rotate(right, r_rotated, cv::ROTATE_90_CLOCKWISE);
 
-    // 计算十字画布尺寸：
-    // 总宽度 = 左侧宽(h) + 中间宽(w) + 右侧宽(h) = 372 + 496 + 372 = 1240
-    // 总高度 = 前向高(h) + 中间高(w) + 后向高(h) = 372 + 496 + 372 = 1240
+    // 计算高分辨率十字画布尺寸：
+    // 总宽度 = 左侧宽(h) + 中间宽(w) + 右侧宽(h)
+    // 总高度 = 前向高(h) + 中间高(w) + 后向高(h)
     int canvas_w = h + w + h;
     int canvas_h = h + w + h;
     cv::Mat canvas(canvas_h, canvas_w, CV_8UC3, cv::Scalar(40, 40, 40));
 
-    // 拼入前视图 (中上)：宽度 w，高度 h
-    f_resized.copyTo(canvas(cv::Rect(h, 0, w, h)));
+    // 拼入前视图 (中上)
+    front.copyTo(canvas(cv::Rect(h, 0, w, h)));
 
-    // 拼入左视图 (左中)：宽度 h，高度 w
+    // 拼入左视图 (左中)
     l_rotated.copyTo(canvas(cv::Rect(0, h, h, w)));
 
-    // 拼入右视图 (右中)：宽度 h，高度 w
+    // 拼入右视图 (右中)
     r_rotated.copyTo(canvas(cv::Rect(h + w, h, h, w)));
 
-    // 拼入后视图 (中下)：宽度 w，高度 h
-    b_resized.copyTo(canvas(cv::Rect(h, h + w, w, h)));
+    // 拼入后视图 (中下)
+    back.copyTo(canvas(cv::Rect(h, h + w, w, h)));
 
     // 实例化并初始化交互状态
     PanZoomState state;
     state.canvas      = canvas;
     state.window_name = utf8_to_gbk("去畸变方位拼接展示 (鼠标滚轮缩放，左键拖拽平移，按任意键继续)");
-    state.scale       = 1.0;
+
+    // 设置初始缩放比例：将原始高分辨率画布等比缩放到 1000x1000 视口中显示
+    state.scale       = 1000.0 / canvas_w;
     state.offset      = cv::Point2d(0, 0);
 
-    // 创建窗口并设置鼠标监听回调
-    cv::namedWindow(state.window_name, cv::WINDOW_AUTOSIZE);
+    // 创建可手动改变大小的窗口并预设窗口尺寸为 1000x1000
+    cv::namedWindow(state.window_name, cv::WINDOW_NORMAL);
+    cv::resizeWindow(state.window_name, 1000, 1000);
     cv::setMouseCallback(state.window_name, onMouse, &state);
 
     // 绘制初始图像
