@@ -150,6 +150,6 @@ cv::Mat Undistort::undistort_func(cv::Mat img, vector<cv::Mat>& remap_table)
     getUndistortMap(remap_table, m_undis_width, m_undis_height, m_intrinsic_undis, m_intrinsic, m_undis2fish_params, m_fish_scale);
 
     cv::Mat undis_img;
-    cv::remap(img, undis_img, remap_table[0], remap_table[1], cv::INTER_LINEAR);
+    cv::remap(img, undis_img, remap_table[0], remap_table[1], cv::INTER_CUBIC);
     return undis_img;
 }

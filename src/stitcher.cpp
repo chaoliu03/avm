@@ -486,7 +486,7 @@ struct PanZoomState
         cv::Mat display_img;
         cv::Mat M = (cv::Mat_<double>(2, 3) << scale, 0, offset.x, 0, scale, offset.y);
         // 从原始高清大画布直接 warp 到窗口所占的分辨率大小，保证像素不被压缩，且缩放平移极致流畅
-        cv::warpAffine(canvas, display_img, M, cv::Size(win_w, win_h), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(40, 40, 40));
+        cv::warpAffine(canvas, display_img, M, cv::Size(win_w, win_h), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(40, 40, 40));
         cv::imshow(window_name, display_img);
     }
 };

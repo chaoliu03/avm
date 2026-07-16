@@ -176,10 +176,10 @@ int main()
     cout << "[步骤 5] 正在生成鸟瞰图..." << endl;
     cv::Mat bird_front_image, bird_back_image, bird_left_image, bird_right_image;
 
-    cv::warpPerspective(clean_front, bird_front_image, g_Homo_F, cv::Size(792, 305), cv::INTER_LINEAR);
-    cv::warpPerspective(clean_back, bird_back_image, g_Homo_B, cv::Size(792, 305), cv::INTER_LINEAR);
-    cv::warpPerspective(clean_left, bird_left_image, g_Homo_L, cv::Size(1131, 281), cv::INTER_LINEAR);
-    cv::warpPerspective(clean_right, bird_right_image, g_Homo_R, cv::Size(1131, 281), cv::INTER_LINEAR);
+    cv::warpPerspective(clean_front, bird_front_image, g_Homo_F, cv::Size(792, 305), cv::INTER_CUBIC);
+    cv::warpPerspective(clean_back, bird_back_image, g_Homo_B, cv::Size(792, 305), cv::INTER_CUBIC);
+    cv::warpPerspective(clean_left, bird_left_image, g_Homo_L, cv::Size(1131, 281), cv::INTER_CUBIC);
+    cv::warpPerspective(clean_right, bird_right_image, g_Homo_R, cv::Size(1131, 281), cv::INTER_CUBIC);
 
     // 保存初始鸟瞰图图像
     cv::imwrite(OUTPUT_DIR + "/bird_front.jpg", bird_front_image);
