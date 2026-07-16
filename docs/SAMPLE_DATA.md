@@ -1,115 +1,115 @@
-# Sample Data Description
+# 示例数据说明
 
-## Input Images Overview
+## 输入图像概述
 
-The AVM system comes with sample fisheye camera images that demonstrate the complete processing pipeline.
+AVM 系统附带了示例鱼眼相机图像，用于演示完整的处理流程。
 
-### Image Specifications
+### 图像规格
 
-- **Resolution**: 1280×960 pixels
-- **Format**: PNG
-- **Camera Type**: Fisheye lens with wide field of view
-- **Calibration Pattern**: 2×4 rectangular grid visible in each image
+- **分辨率**：1280×960 像素
+- **格式**：PNG
+- **相机类型**：具有宽视野的鱼眼镜头
+- **标定网格**：每个图像中都可以清晰看到 2×4 矩形标定图案
 
-### Camera Positions
+### 相机位置
 
-#### Front Camera (`assets/images/front.png`)
+#### 前向相机 (`assets/images/front.png`)
 
-- Position: Front bumper center
-- Field of view: Covers front area and left/right sides
-- Calibration board: Positioned on ground in front of vehicle
+- **位置**：前保险杠中心
+- **视野**：覆盖车辆前方区域以及左侧/右侧一部分
+- **标定板**：放置在车辆前方的地面上
 
-#### Back Camera (`assets/images/back.png`)
+#### 后向相机 (`assets/images/back.png`)
 
-- Position: Rear bumper center  
-- Field of view: Covers rear area and left/right sides
-- Calibration board: Positioned on ground behind vehicle
+- **位置**：后保险杠中心
+- **视野**：覆盖车辆后方区域以及左侧/右侧一部分
+- **标定板**：放置在车辆后方的地面上
 
-#### Left Camera (`assets/images/left.png`)
+#### 左侧相机 (`assets/images/left.png`)
 
-- Position: Left side mirror or door
-- Field of view: Covers left side area
-- Calibration board: Positioned on ground to the left of vehicle
+- **位置**：左侧外后视镜或车门上
+- **视野**：覆盖车辆左侧区域
+- **标定板**：放置在车辆左侧的地面上
 
-#### Right Camera (`assets/images/right.png`)
+#### 右侧相机 (`assets/images/right.png`)
 
-- Position: Right side mirror or door
-- Field of view: Covers right side area
-- Calibration board: Positioned on ground to the right of vehicle
+- **位置**：右侧外后视镜或车门上
+- **视野**：覆盖车辆右侧区域
+- **标定板**：放置在车辆右侧的地面上
 
-### Vehicle Model
+### 车辆模型
 
-#### Vehicle Overlay (`assets/images/su7.png`)
+#### 车辆叠加贴图 (`assets/images/su7.png`)
 
-- **Type**: Top-down vehicle silhouette
-- **Format**: PNG with alpha channel for transparency
-- **Usage**: Overlaid on final stitched result to show vehicle position
-- **Positioning**: Automatically centered in panoramic view
+- **类型**：俯视车辆轮廓图（小米 SU7 车型）
+- **格式**：带有 Alpha 透明通道的 PNG 格式
+- **用途**：叠加在最终拼接结果的中心位置，以指示车辆所占物理空间
+- **定位**：自动在全景图中心居中放置
 
-### Mask Images
+### 遮罩图像（Mask）
 
-The system uses blending masks to create smooth transitions between camera views:
+系统使用融合遮罩在相邻相机视图的重叠区域之间创建平滑过渡：
 
-#### Mask Specifications
+#### 遮罩规格
 
-- **Location**: `assets/masks/`
-- **Files**:
-  - `maskFront.jpg` - Front camera blending mask
-  - `maskBack.jpg` - Back camera blending mask
-  - `maskLeft.jpg` - Left camera blending mask
-  - `maskRight.jpg` - Right camera blending mask
-- **Purpose**: Define blending regions for seamless image stitching
-- **Format**: Grayscale images where brightness indicates blending weight
+- **存放位置**：`assets/masks/`
+- **相关文件**：
+  - `maskFront.jpg` - 前向相机融合遮罩
+  - `maskBack.jpg` - 后向相机融合遮罩
+  - `maskLeft.jpg` - 左侧相机融合遮罩
+  - `maskRight.jpg` - 右侧相机融合遮罩
+- **用途**：定义用于无缝图像拼接的重叠混合区域
+- **格式**：灰度图像，其中像素的亮度表示该方向图像合并时的混合权重
 
-### Calibration Board Details
+### 标定板细节
 
-#### Pattern Configuration
+#### 图案配置
 
-- **Grid Size**: 2 rows × 4 columns
-- **Corner Count**: 8 total corners
-- **Board Size**: Approximately 50cm × 100cm (physical dimensions)
-- **Visibility**: Clearly visible in all four camera views
+- **网格尺寸**：2 行 × 4 列
+- **角点数量**：共 8 个内角点
+- **物理尺寸**：大约为 50cm × 100cm 的物理板
+- **可见性**：必须在对应的相机视野中清晰、完整地显现
 
-#### Detection Requirements
+#### 检测要求
 
-- **Contrast**: High contrast between board and ground
-- **Lighting**: Even illumination without shadows
-- **Position**: Fully within camera field of view
-- **Orientation**: Rectangular pattern aligned with vehicle axes
+- **对比度**：标定板黑白块与地面之间有足够高的对比度
+- **光照**：光照均匀，不能有明显的阴影干扰
+- **位置**：必须完全位于相机的有效视野内（高度处于图像的 20%-70% 范围内）
+- **朝向**：矩形标定图案的轴线需要与车辆的物理坐标轴对齐
 
-## Using Your Own Images
+## 使用您自己的图像
 
-### Camera Setup Requirements
+### 相机设置要求
 
-To use your own images with the AVM system:
+要在 AVM 系统中运行您自己采集的图像：
 
-1. **Camera Positioning**:
-   - Install fisheye cameras at four positions around vehicle
-   - Ensure overlapping fields of view between adjacent cameras
-   - Maintain consistent height and angle
+1. **相机安装定位**：
+   - 在车辆周围的四个位置安装鱼眼相机（前、后、左、右）
+   - 确保相邻两个相机之间有足够的重叠视野区域
+   - 尽量保持安装高度和下俯角度一致
 
-2. **Calibration Board**:
-   - Create a 2×4 rectangular calibration pattern
-   - Position board in overlapping areas between camera views
-   - Ensure board is flat and clearly visible
+2. **标定板放置**：
+   - 制作一个 2×4 的矩形黑白格标定板
+   - 将标定板水平放置在相邻相机视野的重叠区域（车身四个角落的地面上）
+   - 确保标定板平整贴地且清晰可见
 
-3. **Image Capture**:
-   - Capture images simultaneously from all four cameras
-   - Maintain consistent lighting conditions
-   - Ensure calibration board is visible in each image
+3. **图像采集**：
+   - 从所有四个相机同时捕获图像
+   - 保持四个相机的曝光和光照条件相对一致
+   - 确保标定板在每个方向采集的图像中都没有被遮挡
 
-4. **File Preparation**:
-   - Save images as PNG or JPG format
-   - Name files: `front.png`, `back.png`, `left.png`, `right.png`
-   - Place in `assets/images/` directory
+4. **文件准备**：
+   - 将采集的图像保存为 PNG 或 JPG 格式
+   - 文件命名为：`front.png`、`back.png`、`left.png`、`right.png`
+   - 将它们存放在 `assets/images/` 目录下
 
-### Camera Parameter Adjustment
+### 相机参数调整
 
-If using different cameras, you may need to adjust parameters in the source code:
+如果您使用不同规格的相机，您需要调整源码中的参数：
 
-- **Focal Length**: Modify based on your camera specifications
-- **Distortion Coefficients**: Calibrate using OpenCV calibration tools
-- **Image Resolution**: Update if using different image sizes
-- **Fisheye Scale Factor**: Adjust based on lens characteristics
+- **焦距**：根据标定结果修改 `focal_length`
+- **畸变系数**：使用 OpenCV 的 `cv::fisheye::calibrate` 标定工具获取您镜头的畸变系数并更新
+- **图像分辨率**：如果相机分辨率不是 1280x960，请更新对应的宽度和高度变量
+- **鱼眼缩放因子**：根据镜头的视场大小相应调整 `fish_scale`
 
-For detailed parameter tuning, refer to the [Technical Specifications](TECHNICAL_SPECS.md).
+有关详细的参数微调指导，请参阅 [技术规格](TECHNICAL_SPECS.md)。

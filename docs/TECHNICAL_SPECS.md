@@ -1,133 +1,134 @@
-# Technical Specifications
+# 技术规格说明书
 
-## Camera Parameters
+## 相机参数
 
-### Fisheye Camera Specifications
+### 鱼眼相机规格
 
-- **Focal Length**: 910.0 pixels
-- **Pixel Size**: 3.0μm × 3.0μm
-- **Image Resolution**: 1280×960 pixels
-- **Fisheye Scaling Factor**: 0.5
-- **Undistortion Scaling**: 1.55
+- **焦距**：910.0 像素
+- **像素物理尺寸**：3.0μm × 3.0μm
+- **图像分辨率**：1280×960 像素
+- **鱼眼缩放因子**：0.5
+- **去畸变缩放因子**：1.55
 
-### Distortion Model
+### 畸变模型
 
-The system uses a polynomial fisheye distortion model:
+系统采用多项式鱼眼畸变模型：
 
 ```
 θ_distorted = θ_undistorted + k₁θ³ + k₂θ⁵ + k₃θ⁷ + k₄θ⁹
 ```
 
-Default distortion coefficients:
+默认相机的畸变多项式系数如下：
 
 - k₁ = -0.05611147
 - k₂ = -0.05377447
 - k₃ = 0.0115717
 - k₄ = 0.0030788
 
-## Calibration Board Specifications
+## 标定板规格
 
-### Pattern Configuration
+### 图案配置
 
-- **Pattern Type**: Rectangular grid
-- **Grid Size**: 2×4 (2 rows, 4 columns)
-- **Corner Count**: 8 corners total
-- **Detection Method**: Histogram-based adaptive thresholding
+- **图案类型**：矩形网格（棋盘标定纸）
+- **网格大小**：2×4（2 行 × 4 列）
+- **角点数量**：共 8 个内角点
+- **检测方法**：基于图像直方图分析的自适应阈值分割
 
-### Detection Parameters
+### 检测参数
 
-- **Contrast Enhancement**: 2.5× gamma correction
-- **Valid Detection Region**: Y-axis 20%-70% of image height
-- **Corner Refinement**: Sub-pixel accuracy using `cornerSubPix`
-- **Backup Detection**: Adaptive threshold with 401×401 kernel
+- **对比度增强**：2.5 倍 Gamma 矫正
+- **有效检测区域**：Y 轴方向限制在图像高度的 20%-70% 范围，排除杂光干扰
+- **角点细化精度**：使用 `cornerSubPix` 实现亚像素级亚像素插值细化
+- **备用检测机制**：401×401 局部大滑动窗口的自适应阈值化
 
-## Bird's Eye View Parameters
+## 鸟瞰图（BEV）参数
 
-### Image Dimensions
+### 图像尺寸
 
-- **Front/Back Views**: 792×305 pixels
-- **Left/Right Views**: 1131×281 pixels
-- **Final Stitched Image**: Variable based on layout
+- **前向/后向视图**：792×305 像素
+- **左侧/右侧视图**：1131×281 像素
+- **最终拼接全景图**：随拼接排布设定而变化（本项目画布实际大小为 880×616 像素）
 
-### Transformation Matrices
+### 变换矩阵
 
-Each camera view uses homography transformation calculated from:
+每一路相机视图通过单应性变换（Homography）投影到地面，计算参数来源：
 
-- Source: Detected corner points in undistorted image
-- Target: Predefined bird's eye view coordinates
+- **源点（Source）**：去畸变平面下检测出来的 8 个标定板角点
+- **目标点（Target）**：在虚拟地面鸟瞰图像中所预设对应的标准像素坐标
 
-### Rotation Corrections
+### 旋转校正
 
-- **Front View**: 0° (no rotation)
-- **Back View**: 180°
-- **Left View**: 90° clockwise
-- **Right View**: 90° counter-clockwise
+- **前向视图**：0° （保持朝前）
+- **后向视图**：旋转 180° 朝下
+- **左侧视图**：顺时针旋转 90° 朝左
+- **右侧视图**：逆时针旋转 90° 朝右
 
-## Image Stitching Parameters
+## 图像拼接参数
 
-### Layout Configuration
+### 布局排布配置
 
-- **Back Image Offset**: Y = 643 pixels
-- **Right Image Offset**: X = 398 pixels
-- **Vehicle Overlay**: Center positioned with alpha blending
+- **后向图像偏移量**：Y = 643 像素
+- **右侧图像偏移量**：X = 398 像素
+- **车辆层叠加**：车辆投影图形居中，采用 Alpha 透明通道叠加合成
 
-### Blending Masks
+### 融合遮罩（Mask）
 
-- Individual masks for each camera view
-- Smooth transition zones between adjacent views
-- Alpha channel support for vehicle model overlay
+- 每一路视图都有一张与之尺寸一致的 3 通道渐变灰度遮罩图
+- 负责消除相邻两路相机相接重叠部分的拼缝线，提供平滑羽化渐变过渡
+- 车辆模型图片含有独立的 Alpha 通道以保障边缘与底下路面无缝贴合
 
-## Performance Characteristics
+## 性能特性
 
-### Processing Pipeline Timing
+### 处理流水线耗时
 
-1. **Image Loading**: ~10ms per image
-2. **Undistortion**: ~50ms per image
-3. **Corner Detection**: ~100-200ms per image
-4. **Perspective Transform**: ~30ms per image
-5. **Image Stitching**: ~100ms total
+1. **图像文件读取**：每张图约 10ms
+2. **去畸变处理**：每张图约 50ms
+3. **角点自动检测**：每张图约 100-200ms
+4. **透视变换投影**：每张图约 30ms
+5. **全景图像拼接与融合**：总体耗费约 100ms
 
-### Memory Requirements
+### 内存需求
 
-- **Input Images**: ~5MB (4 × 1280×960×3)
-- **Intermediate Results**: ~20MB
-- **Output Image**: ~2-3MB
-- **Total Peak Usage**: ~30-40MB
+- **输入原始图**：约 5MB (4 × 1280×960×3 字节)
+- **中间计算缓存**：约 20MB
+- **输出全景图像**：约 2-3MB
+- **总峰值内存消耗**：约 30-40MB
 
-## Algorithm Details
+## 算法实现细节
 
-### Corner Detection Algorithm
+### 角点检测算法
 
-1. **Preprocessing**:
-   - Convert to grayscale
-   - Apply gamma correction for contrast enhancement
-   - Set valid detection region (20%-70% Y-axis)
+1. **图像预处理**：
+   - 将 RGB 图像转换为灰度图像
+   - 对灰度图像应用 2.5 倍 Gamma 矫正拉开黑白对比度
+   - 截取 Y 轴 20%-70% 区间设定为有效检测感兴趣区域（ROI）
 
-2. **Binarization**:
-   - Histogram analysis for optimal threshold
-   - Bimodal distribution detection
-   - Adaptive fallback if histogram method fails
+2. **自适应二值化**：
+   - 统计灰度值直方图并滑动平滑
+   - 检测一阶梯度过零点以寻找直方图的双峰分布（波峰）
+   - 基于双峰谷底计算最优分割阈值；当直方图算法失效时，降级使用大滑动窗口的自适应阈值化
 
-3. **Contour Analysis**:
-   - Find contours in binary image
-   - Filter by area (minimum threshold)
-   - Approximate polygonal shapes
+3. **轮廓提取与几何筛选**：
+   - 提取二值化图像的外部轮廓
+   - 根据与鱼眼缩放系数相关的面积阈值过滤微小噪点轮廓
+   - 利用 `cv::approxPolyDP` 对剩余轮廓进行多边形逼近
 
-4. **Rectangle Validation**:
-   - Verify 4-sided polygon structure
-   - Check geometric constraints
-   - Sort corners in consistent order
+4. **四边形几何校验**：
+   - 验证逼近的多边形是否严格为四边形（顶点数为 4）
+   - 检查多边形中心点是否为黑色像素（确保选中的是黑色标定块本身而非白底）
+   - 校验四边形对角线、边长比例等是否满足对称和近似正方形的比例关系
+   - 将所有符合条件的标定块角点收集，并按空间拓扑顺序（由上至下、由左至右）统一排序
 
-5. **Coordinate Transformation**:
-   - Transform from fisheye to undistorted coordinates
-   - Apply sub-pixel refinement
-   - Validate final corner positions
+5. **坐标系变换**：
+   - 使用多项式畸变反投影公式将畸变角点位置转换至去畸变平面
+   - 结合去畸变图像信息调用 `cv::cornerSubPix` 做高精度细化以消除离散化带来的像素偏差
+   - 验证最终角点输出的有效性
 
-### Homography Calculation
+### 单应性矩阵求解
 
-Uses OpenCV's `findHomography` with:
+调用 OpenCV 的 `cv::findHomography` 求解，算法特性：
 
-- **Method**: Direct Linear Transform (DLT)
-- **Source Points**: 8 detected corners
-- **Target Points**: Predefined bird's eye coordinates
-- **Robustness**: No RANSAC (assumes clean input)
+- **方法**：采用直接线性变换算法（DLT - Direct Linear Transform）
+- **源点对**：去畸变平面下获取的 8 个亚像素角点坐标
+- **目标点对**：地面虚拟鸟瞰图定义的 8 个标准像素坐标
+- **稳健性**：未开启 RANSAC 算法（因为前面的多边形验证与角点拓扑排序已经剔除了错误噪点，输入坐标对是完全纯净的）

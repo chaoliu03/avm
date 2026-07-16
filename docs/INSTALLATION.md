@@ -1,26 +1,26 @@
-# Installation Guide
+# 安装指南
 
-## System Requirements
+## 系统要求
 
-### Operating System
+### 操作系统
 
 - Linux (Ubuntu 18.04+, CentOS 7+)
 - macOS 10.14+
-- Windows 10+ (with WSL2 recommended)
+- Windows 10+ (推荐使用 WSL2)
 
-### Hardware Requirements
+### 硬件要求
 
-- **Memory**: Minimum 4GB RAM, recommended 8GB+
-- **Storage**: 1GB free space for build and outputs
-- **CPU**: Multi-core processor recommended for optimal performance
+- **内存**：最小需 4GB RAM，推荐 8GB+
+- **存储空间**：1GB 空闲空间（用于构建和输出文件）
+- **CPU**：推荐多核处理器以获得最佳性能
 
-## Dependencies
+## 依赖项
 
-### Required Dependencies
+### 必需依赖项
 
-#### OpenCV (Version 3.0+)
+#### OpenCV (版本 3.0 及以上)
 
-OpenCV is the core dependency for image processing operations.
+OpenCV 是图像处理的操作核心。
 
 **Ubuntu/Debian:**
 
@@ -33,26 +33,26 @@ sudo apt install libopencv-dev libopencv-contrib-dev
 
 ```bash
 sudo yum install opencv-devel
-# or for newer versions:
+# 或者针对较新版本：
 sudo dnf install opencv-devel
 ```
 
-**macOS (using Homebrew):**
+**macOS (使用 Homebrew):**
 
 ```bash
 brew install opencv
 ```
 
-**Manual Installation:**
-If package managers don't provide a recent enough version:
+**手动安装：**
+如果包管理器提供的版本不够新：
 
 ```bash
-# Download OpenCV source
+# 下载 OpenCV 源码
 git clone https://github.com/opencv/opencv.git
 cd opencv
-git checkout 4.x  # or your preferred version
+git checkout 4.x  # 或您想要的分支/版本
 
-# Build and install
+# 构建并安装
 mkdir build && cd build
 cmake -D CMAKE_BUILD_TYPE=RELEASE \
       -D CMAKE_INSTALL_PREFIX=/usr/local \
@@ -65,9 +65,9 @@ make -j$(nproc)
 sudo make install
 ```
 
-#### CMake (Version 3.10+)
+#### CMake (版本 3.10 及以上)
 
-Required for building the project.
+用于构建项目。
 
 **Ubuntu/Debian:**
 
@@ -79,7 +79,7 @@ sudo apt install cmake
 
 ```bash
 sudo yum install cmake
-# or: sudo dnf install cmake
+# 或者：sudo dnf install cmake
 ```
 
 **macOS:**
@@ -88,9 +88,9 @@ sudo yum install cmake
 brew install cmake
 ```
 
-### Optional Dependencies
+### 可选依赖项
 
-#### Git (for version control)
+#### Git (用于版本控制)
 
 ```bash
 # Ubuntu/Debian
@@ -100,154 +100,154 @@ sudo apt install git
 sudo yum install git
 
 # macOS
-git --version  # Usually pre-installed
+git --version  # 通常已预装
 ```
 
-## Installation Steps
+## 安装步骤
 
-### Method 1: Clone from GitHub (Recommended)
+### 方法 1：从 GitHub 克隆（推荐）
 
 ```bash
-# Clone the repository
+# 克隆仓库
 git clone https://github.com/xixu-me/AVM.git
 cd AVM
 
-# Make scripts executable
+# 赋予脚本执行权限
 chmod +x scripts/*.sh
 
-# Build the project
+# 构建项目
 ./scripts/build.sh
 ```
 
-### Method 2: Download and Build
+### 方法 2：下载并构建
 
 ```bash
-# Download and extract source code
+# 下载并解压源码
 wget https://github.com/xixu-me/AVM/archive/main.zip
 unzip main.zip
 cd AVM-main
 
-# Make scripts executable
+# 赋予脚本执行权限
 chmod +x scripts/*.sh
 
-# Build the project
+# 构建项目
 ./scripts/build.sh
 ```
 
-### Manual Build Process
+### 手动构建过程
 
-If you prefer to build manually:
+如果您更倾向于手动构建：
 
 ```bash
-# Create build directory
+# 创建构建目录
 mkdir -p build
 cd build
 
-# Configure with CMake
+# 使用 CMake 进行配置
 cmake ..
 
-# Build (adjust -j flag based on your CPU cores)
+# 构建（根据您的 CPU 核心数调整 -j 参数）
 make -j$(nproc)
 
-# Verify build
-ls bin/avm  # Should exist if build successful
+# 验证构建
+ls bin/avm  # 如果构建成功，该文件应该存在
 ```
 
-## Verification
+## 验证
 
-### Test Installation
+### 测试安装
 
 ```bash
-# Quick test with provided sample images
+# 使用提供的示例图像进行快速测试
 ./scripts/run.sh
 
-# Check output
-ls build/stitched_result_with_su7.jpg  # Should exist after successful run
+# 检查输出结果
+ls build/stitched_result_with_su7.jpg  # 运行成功后，该文件应该存在
 ```
 
-### Expected Output Files
+### 期望的输出文件
 
-After successful execution, you should see:
+成功执行后，您应该在 `build/` 目录下看到：
 
 ```
 build/
-├── front_undis.jpg         # Undistorted front view
-├── back_undis.jpg          # Undistorted back view  
-├── left_undis.jpg          # Undistorted left view
-├── right_undis.jpg         # Undistorted right view
-├── bird_front_2.jpg        # Front bird's eye view
-├── bird_back_2.jpg         # Back bird's eye view
-├── bird_left_2.jpg         # Left bird's eye view
-├── bird_right_2.jpg        # Right bird's eye view
-└── stitched_result_with_su7.jpg  # Final panoramic result
+├── front_undis.jpg         # 前视去畸变图像
+├── back_undis.jpg          # 后视去畸变图像  
+├── left_undis.jpg          # 左视去畸变图像
+├── right_undis.jpg         # 右视去畸变图像
+├── bird_front_2.jpg        # 前向鸟瞰图
+├── bird_back_2.jpg         # 后向鸟瞰图
+├── bird_left_2.jpg         # 左向鸟瞰图
+├── bird_right_2.jpg        # 右向鸟瞰图
+└── stitched_result_with_su7.jpg  # 最终全景拼接结果
 ```
 
-## Troubleshooting
+## 问题排查
 
-### OpenCV Not Found
+### 未找到 OpenCV
 
 ```
 CMake Error: Could not find OpenCV
 ```
 
-**Solution:**
+**解决方案：**
 
-- Verify OpenCV installation: `pkg-config --modversion opencv`
-- Set OpenCV path manually: `export OpenCV_DIR=/path/to/opencv`
-- Reinstall OpenCV development packages
+- 验证 OpenCV 安装情况：`pkg-config --modversion opencv`
+- 手动设置 OpenCV 路径：`export OpenCV_DIR=/path/to/opencv`
+- 重新安装 OpenCV 开发包
 
-### Build Errors
+### 构建错误
 
 ```
 error: opencv2/opencv.hpp: No such file or directory
 ```
 
-**Solution:**
+**解决方案：**
 
-- Install OpenCV development headers
-- Check include paths in CMakeLists.txt
-- Verify compiler can find OpenCV includes
+- 安装 OpenCV 开发头文件
+- 检查 CMakeLists.txt 中的包含路径
+- 验证编译器能找到 OpenCV 的包含路径
 
-### Runtime Errors
+### 运行时错误
 
 ```
 error while loading shared libraries: libopencv_core.so
 ```
 
-**Solution:**
+**解决方案：**
 
-- Update library path: `sudo ldconfig`
-- Add to LD_LIBRARY_PATH: `export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH`
+- 更新共享库缓存：`sudo ldconfig`
+- 添加到 LD_LIBRARY_PATH：`export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH`
 
-### Permission Errors
+### 权限错误
 
 ```
 Permission denied: ./scripts/build.sh
 ```
 
-**Solution:**
+**解决方案：**
 
 ```bash
 chmod +x scripts/*.sh
 ```
 
-### Missing Input Images
+### 缺失输入图像
 
 ```
 [ERROR] Unable to read input image files
 ```
 
-**Solution:**
+**解决方案：**
 
-- Ensure input images exist in `assets/images/`
-- Check file permissions and formats (PNG/JPG supported)
-- Verify image files are not corrupted
+- 确保输入图像位于 `assets/images/` 目录中
+- 检查文件权限和格式（支持 PNG/JPG）
+- 验证图像文件没有损坏
 
-## Performance Optimization
+## 性能优化
 
-### Build Optimizations
+### 构建优化
 
-For maximum performance, build in Release mode:
+为了获得最佳性能，请使用 Release 模式构建：
 
 ```bash
 cd build
@@ -255,26 +255,26 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j$(nproc)
 ```
 
-### Runtime Optimizations
+### 运行优化
 
-- Use SSD storage for faster I/O operations
-- Ensure sufficient RAM to avoid swapping
-- Close unnecessary applications during processing
+- 使用 SSD 存储以加快 I/O 读取/写入
+- 确保有足够的 RAM 以避免磁盘虚拟内存交换（Swap）
+- 在处理图像期间关闭不必要的应用程序
 
-## Next Steps
+## 下一步
 
-After successful installation:
+安装成功后：
 
-1. **Read the Documentation**: Check `README.md` for usage instructions
-2. **Try Custom Images**: Replace sample images with your own fisheye images
-3. **Explore Configuration**: Review camera parameters in the source code
-4. **Contribute**: See `CONTRIBUTING.md` for development guidelines
+1. **阅读文档**：查看 `README.md` 获取详细的使用说明。
+2. **尝试自定义图像**：用您自己的鱼眼图像替换示例图像。
+3. **探索参数配置**：阅读并调整源码中的相机参数。
+4. **贡献**：参阅 `CONTRIBUTING.md` 了解开发指南。
 
-## Getting Help
+## 获取帮助
 
-If you encounter issues:
+如果您遇到问题：
 
-1. Check this troubleshooting section
-2. Search existing GitHub issues
-3. Create a new issue with detailed error information
-4. Include your system information and build logs
+1. 查看此问题排查部分。
+2. 搜索已有的 GitHub Issue。
+3. 创建一个新的 Issue 并附带详细的错误信息。
+4. 包含您的系统环境信息和构建日志。
