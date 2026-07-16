@@ -15,7 +15,7 @@
 #define IMAGE_RIGHT_PIXEL_X 398 // 拼接结果中右视图图像的 X 轴偏移量
 
 // 输出图片文件夹常量
-const std::string OUTPUT_DIR = "output";
+extern const std::string OUTPUT_DIR;
 
 // 相机配置参数结构体
 struct CameraConfig

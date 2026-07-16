@@ -21,6 +21,8 @@ using namespace cv;
 // 全局变量定义与初始化
 // ========================================
 
+const std::string OUTPUT_DIR = "output";
+
 // 全局默认相机配置定义
 const CameraConfig g_default_camera_config(
     0.43f,                                                      // fish_scale
