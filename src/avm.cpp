@@ -7,6 +7,7 @@
 #include "undistort.h"
 #include "corner_detector.h"
 #include "stitcher.h"
+#include "utils.h"
 #include <iostream>
 #include <sys/stat.h>
 
@@ -123,8 +124,13 @@ int main()
     cv::Mat clean_left  = left_undis.clone();
     cv::Mat clean_right = right_undis.clone();
 
-    // 拼接四张去畸变图像方位并利用窗口显示出来
-    showUndistortStitched(clean_front, clean_back, clean_left, clean_right);
+
+    // 拼接四张去畸变图像方位并进行显示
+    cv::Mat stitched_undis = getUndistortStitched(clean_front, clean_back, clean_left, clean_right);
+    cv::imwrite(OUTPUT_DIR + utf8_to_gbk("/畸变矫正.jpg"), stitched_undis);
+
+    PanZoomState state;
+    showInteractive(stitched_undis, state);
     cout << "[成功] 去畸变图像方位拼接显示完成" << endl;
 
     // 检测标定板角点
@@ -205,5 +211,21 @@ int main()
     cout << "===========================================" << endl;
     cout << "[系统] 环视全景系统处理完成" << endl;
     cout << "===========================================" << endl;
+
+    cv::waitKey(0);
+
+    // 销毁窗口安全保护
+    try
+    {
+        if (!state.window_name.empty())
+        {
+            cv::destroyWindow(state.window_name);
+        }
+    }
+    catch (const cv::Exception&)
+    {
+        // 捕获并忽略 OpenCV 异常（如窗口已被用户手动关闭的情况）
+    }
+
     return 0;
 }

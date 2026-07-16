@@ -3,50 +3,13 @@
  * @brief 图像拼接与融合模块实现
  */
 
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#endif
-
 #include "stitcher.h"
+#include "utils.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
 using namespace std;
 using namespace cv;
-
-#ifdef _WIN32
-/**
- * @brief 将 UTF-8 编码的 std::string 转换为系统本地多字节编码（Windows 下为 GBK/ANSI）
- * @description 解决 Windows 上 OpenCV 窗口标题中文乱码的问题
- */
-static std::string utf8_to_gbk(const std::string& str)
-{
-    int len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
-    if (len <= 0) return "";
-    std::wstring wstr(len, 0);
-    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wstr[0], len);
-
-    int len2 = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
-    if (len2 <= 0) return "";
-    std::string gbk_str(len2, 0);
-    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, &gbk_str[0], len2, NULL, NULL);
-
-    // 移除转换后字符串尾部冗余的 '\0' 字符，避免与 wstring 带来的长度不匹配
-    if (!gbk_str.empty() && gbk_str.back() == '\0')
-    {
-        gbk_str.pop_back();
-    }
-    return gbk_str;
-}
-#else
-static std::string utf8_to_gbk(const std::string& str)
-{
-    return str;
-}
-#endif
 
 // ========================================
 // 鸟瞰目标坐标初始化实现
@@ -465,31 +428,6 @@ void join()
     cout << "[成功] 全景图拼接完成，结果已保存：" << OUTPUT_DIR << "/stitched_result_with_su7.jpg" << endl;
 }
 
-// 图像交互缩放与拖拽状态结构体
-struct PanZoomState
-{
-    cv::Mat     canvas;
-    double      scale              = 1.0;
-    cv::Point2d offset             = cv::Point2d(0, 0);
-    bool        is_dragging        = false;
-    cv::Point   drag_start_mouse;
-    cv::Point2d drag_start_offset;
-    std::string window_name;
-
-    void update_display()
-    {
-        // 获取窗口当前的实际图像显示区域大小，从而进行自适应分辨率的 warp 映射
-        cv::Rect rect = cv::getWindowImageRect(window_name);
-        int win_w = rect.width > 0 ? rect.width : 1000;
-        int win_h = rect.height > 0 ? rect.height : 1000;
-
-        cv::Mat display_img;
-        cv::Mat M = (cv::Mat_<double>(2, 3) << scale, 0, offset.x, 0, scale, offset.y);
-        // 从原始高清大画布直接 warp 到窗口所占的分辨率大小，保证像素不被压缩，且缩放平移极致流畅
-        cv::warpAffine(canvas, display_img, M, cv::Size(win_w, win_h), cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(40, 40, 40));
-        cv::imshow(window_name, display_img);
-    }
-};
 
 // 鼠标交互回调函数
 static void onMouse(int event, int x, int y, int flags, void* userdata)
@@ -500,8 +438,8 @@ static void onMouse(int event, int x, int y, int flags, void* userdata)
 
     if (event == cv::EVENT_LBUTTONDOWN)
     {
-        state->is_dragging        = true;
-        state->drag_start_mouse   = cv::Point(x, y);
+        state->is_dragging       = true;
+        state->drag_start_mouse  = cv::Point(x, y);
         state->drag_start_offset = state->offset;
     }
     else if (event == cv::EVENT_LBUTTONUP)
@@ -512,9 +450,9 @@ static void onMouse(int event, int x, int y, int flags, void* userdata)
     {
         if (state->is_dragging)
         {
-            cv::Point   curr_mouse(x, y);
-            cv::Point   diff = curr_mouse - state->drag_start_mouse;
-            state->offset    = state->drag_start_offset + cv::Point2d(diff.x, diff.y);
+            cv::Point curr_mouse(x, y);
+            cv::Point diff = curr_mouse - state->drag_start_mouse;
+            state->offset  = state->drag_start_offset + cv::Point2d(diff.x, diff.y);
             state->update_display();
         }
     }
@@ -540,7 +478,7 @@ static void onMouse(int event, int x, int y, int flags, void* userdata)
     }
 }
 
-void showUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv::Mat& left, const cv::Mat& right)
+cv::Mat getUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv::Mat& left, const cv::Mat& right)
 {
     // 获取相机原始尺寸（不进行像素压缩，保留 100% 细节）
     int w = front.cols;
@@ -558,8 +496,8 @@ void showUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv::
     // 计算高分辨率十字画布尺寸：
     // 总宽度 = 左侧宽(h) + 中间宽(w) + 右侧宽(h)
     // 总高度 = 前向高(h) + 中间高(w) + 后向高(h)
-    int canvas_w = h + w + h;
-    int canvas_h = h + w + h;
+    int     canvas_w = h + w + h;
+    int     canvas_h = h + w + h;
     cv::Mat canvas(canvas_h, canvas_w, CV_8UC3, cv::Scalar(40, 40, 40));
 
     // 拼入前视图 (中上)
@@ -574,14 +512,17 @@ void showUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv::
     // 拼入后视图 (中下)
     back.copyTo(canvas(cv::Rect(h, h + w, w, h)));
 
-    // 实例化并初始化交互状态
-    PanZoomState state;
+    return canvas;
+}
+
+void showInteractive(const cv::Mat& canvas, PanZoomState& state)
+{
     state.canvas      = canvas;
     state.window_name = utf8_to_gbk("去畸变方位拼接展示 (鼠标滚轮缩放，左键拖拽平移，按任意键继续)");
 
     // 设置初始缩放比例：将原始高分辨率画布等比缩放到 1000x1000 视口中显示
-    state.scale       = 1000.0 / canvas_w;
-    state.offset      = cv::Point2d(0, 0);
+    state.scale  = 1000.0 / canvas.cols;
+    state.offset = cv::Point2d(0, 0);
 
     // 创建可手动改变大小的窗口并预设窗口尺寸为 1000x1000
     cv::namedWindow(state.window_name, cv::WINDOW_NORMAL);
@@ -590,8 +531,4 @@ void showUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv::
 
     // 绘制初始图像
     state.update_display();
-
-    // 等待按键关闭
-    cv::waitKey(0);
-    cv::destroyWindow(state.window_name);
 }
