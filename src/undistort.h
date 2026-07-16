@@ -18,7 +18,7 @@ public:
     /**
      * @brief 构造函数，初始化去畸变参数
      */
-    Undistort();
+    Undistort(const CameraConfig& config);
 
     /**
      * @brief 执行图像去畸变

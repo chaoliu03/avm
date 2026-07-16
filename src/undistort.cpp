@@ -14,32 +14,30 @@ using namespace cv;
  * @brief Undistort 类构造函数
  * @description 初始化鱼眼相机的各项参数和内参矩阵
  */
-Undistort::Undistort()
+Undistort::Undistort(const CameraConfig& config)
 {
     // 初始化相机参数
-    m_fish_scale   = 0.5f;    // 鱼眼缩放因子
-    m_focal_length = 910.0f;  // 焦距
-    m_dx           = 3.0f;    // X 方向像素间距
-    m_dy           = 3.0f;    // Y 方向像素间距
-    m_fish_width   = 1280.0f; // 鱼眼图像宽度
-    m_fish_height  = 960.0f;  // 鱼眼图像高度
-    m_undis_scale  = 1.55f;   // 去畸变缩放因子
+    m_fish_scale   = config.fish_scale;   // 鱼眼缩放因子
+    m_focal_length = config.focal_length; // 焦距
+    m_dx           = config.dx;           // X 方向像素间距
+    m_dy           = config.dy;           // Y 方向像素间距
+    m_fish_width   = config.fish_width;   // 鱼眼图像宽度
+    m_fish_height  = config.fish_height;  // 鱼眼图像高度
+    m_undis_scale  = config.undis_scale;  // 去畸变缩放因子
 
     // 去畸变到鱼眼的多项式参数
-    m_undis2fish_params = {0.18238692, -0.08579553, 0.03366532, -0.00561911};
+    m_undis2fish_params = config.undis2fish_params;
 
     // 计算去畸变后的图像尺寸
     m_undis_width  = static_cast<int>(m_undis_scale * m_fish_width);
     m_undis_height = static_cast<int>(m_undis_scale * m_fish_height);
 
     // 构建去畸变内参矩阵
-    m_intrinsic_undis = (cv::Mat_<float>(3, 3) << m_focal_length / m_dx * m_fish_scale, 0, m_fish_width / 2 * m_undis_scale, 0, m_focal_length / m_dy * m_fish_scale, m_fish_height / 2 * m_undis_scale, 0, 0, 1);
-
+    m_intrinsic_undis = config.getIntrinsicUndis();
     cout << "[信息] 去畸变内参矩阵初始化完成" << endl;
 
     // 构建原始内参矩阵
-    m_intrinsic = (cv::Mat_<float>(3, 3) << m_focal_length / m_dx, 0, m_fish_width / 2, 0, m_focal_length / m_dy, m_fish_height / 2, 0, 0, 1);
-
+    m_intrinsic = config.getIntrinsic();
     cout << "[信息] 原始内参矩阵初始化完成" << endl;
 }
 

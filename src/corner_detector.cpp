@@ -498,14 +498,16 @@ cv::Vec2f warpFisheye2Undist(float fish_scale, float f_dx, float f_dy, float und
  * @description 在图像中检测 2x4 排列的标定板角点，并转换到去畸变坐标系下
  * @param img 输入图像
  * @param max_sz 最大面积阈值
- * @param fish_scale 鱼眼缩放因子
+ * @param config 相机配置参数结构体
  * @param detect_points 检测到的角点坐标（输出）
  * @param fish_undis_flag 鱼眼去畸变标志
  * @param src_image_type 源图像类型
  * @return 是否成功检测到 8 个角点
  */
-bool detectPoints(cv::Mat img, float max_sz, float fish_scale, std::vector<cv::Point2f>& detect_points, int fish_undis_flag, ImageType src_image_type)
+bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::vector<cv::Point2f>& detect_points, int fish_undis_flag, ImageType src_image_type)
 {
+    float fish_scale = config.fish_scale;
+
     // 设置有效的检测区域（Y 方向）
     float              max_y_thresh = static_cast<float>(0.7f * img.rows);
     float              min_y_thresh = static_cast<float>(0.2f * img.rows);
@@ -592,14 +594,14 @@ bool detectPoints(cv::Mat img, float max_sz, float fish_scale, std::vector<cv::P
     // 对角点排序
     detect_points = detectPointsSort(detect_points);
 
-    // 获取相机内参参数
-    float     f_dx              = g_intrinsic.at<float>(0, 0);
-    float     f_dy              = g_intrinsic.at<float>(1, 1);
-    float     fish_center_x     = g_intrinsic.at<float>(0, 2);
-    float     fish_center_y     = g_intrinsic.at<float>(1, 2);
-    float     undis_center_x    = g_intrinsic_undis.at<float>(0, 2);
-    float     undis_center_y    = g_intrinsic_undis.at<float>(1, 2);
-    cv::Vec4d fish2undis_params = g_fish2undis_params;
+    // 获取相机内参和畸变参数
+    float     f_dx              = config.focal_length / config.dx;
+    float     f_dy              = config.focal_length / config.dy;
+    float     fish_center_x     = static_cast<float>(config.fish_width) / 2.0f;
+    float     fish_center_y     = static_cast<float>(config.fish_height) / 2.0f;
+    float     undis_center_x    = (static_cast<float>(config.fish_width) / 2.0f) * config.undis_scale;
+    float     undis_center_y    = (static_cast<float>(config.fish_height) / 2.0f) * config.undis_scale;
+    cv::Vec4d fish2undis_params = config.fish2undis_params;
 
     // 将角点从鱼眼坐标系转换到去畸变坐标系
     cv::Vec2f xy;

@@ -21,9 +21,18 @@ using namespace cv;
 // 全局变量定义与初始化
 // ========================================
 
-cv::Mat   g_intrinsic_undis;   // 去畸变内参矩阵
-cv::Mat   g_intrinsic;         // 原始内参矩阵
-cv::Vec4d g_fish2undis_params; // 鱼眼到无畸变变换参数
+// 全局默认相机配置定义
+const CameraConfig g_default_camera_config(
+    0.5f,                                                       // fish_scale
+    910.0f,                                                     // focal_length
+    3.0f,                                                       // dx
+    3.0f,                                                       // dy
+    1280,                                                       // fish_width
+    960,                                                        // fish_height
+    1.55f,                                                      // undis_scale
+    cv::Vec4d(-0.05611147, -0.05377447, 0.0115717, 0.0030788),  // fish2undis_params
+    cv::Vec4d(0.18238692, -0.08579553, 0.03366532, -0.00561911) // undis2fish_params
+);
 
 // 四个方向的角点坐标
 std::vector<cv::Point2f> g_corner_front; // 前视图角点
@@ -79,24 +88,6 @@ int main()
     g_corner_left  = std::vector<cv::Point2f>(8);
     g_corner_right = std::vector<cv::Point2f>(8);
 
-    // 设置相机参数
-    float fish_scale   = 0.5f;
-    float focal_length = 910.0f;
-    int   dx           = 3;
-    int   dy           = 3;
-    int   fish_width   = 1280;
-    int   fish_height  = 960;
-    float undis_scale  = 1.55f;
-
-    // 鱼眼到去畸变参数
-    g_fish2undis_params = {-0.05611147, -0.05377447, 0.0115717, 0.0030788};
-
-    // 构建去畸变内参矩阵
-    g_intrinsic_undis = (cv::Mat_<float>(3, 3) << focal_length / dx * fish_scale, 0, fish_width / 2 * undis_scale, 0, focal_length / dy * fish_scale, fish_height / 2 * undis_scale, 0, 0, 1);
-
-    // 构建原始内参矩阵
-    g_intrinsic = (cv::Mat_<float>(3, 3) << focal_length / dx, 0, fish_width / 2, 0, focal_length / dy, fish_height / 2, 0, 0, 1);
-
     cout << "[初始化] 相机参数初始化完成" << endl;
 
     // 读取四个方向的鱼眼图像
@@ -115,7 +106,7 @@ int main()
 
     // 创建去畸变处理对象
     cout << "[步骤 2] 正在进行图像去畸变处理..." << endl;
-    Undistort            undistort_handle;
+    Undistort            undistort_handle(g_default_camera_config);
     std::vector<cv::Mat> undis2dis_front, undis2dis_back, undis2dis_left, undis2dis_right;
 
     // 执行图像去畸变
@@ -134,10 +125,10 @@ int main()
     // 检测标定板角点
     cout << "[步骤 3] 正在检测标定板角点..." << endl;
     bool success = true;
-    success &= detectPoints(image_f, 20000, 0.5, g_corner_front, 0, ImageType::IMAGE_FRONT);
-    success &= detectPoints(image_b, 20000, 0.5, g_corner_back, 0, ImageType::IMAGE_BACK);
-    success &= detectPoints(image_l, 20000, 0.5, g_corner_left, 0, ImageType::IMAGE_LEFT);
-    success &= detectPoints(image_r, 20000, 0.5, g_corner_right, 0, ImageType::IMAGE_RIGHT);
+    success &= detectPoints(image_f, 20000, g_default_camera_config, g_corner_front, 0, ImageType::IMAGE_FRONT);
+    success &= detectPoints(image_b, 20000, g_default_camera_config, g_corner_back, 0, ImageType::IMAGE_BACK);
+    success &= detectPoints(image_l, 20000, g_default_camera_config, g_corner_left, 0, ImageType::IMAGE_LEFT);
+    success &= detectPoints(image_r, 20000, g_default_camera_config, g_corner_right, 0, ImageType::IMAGE_RIGHT);
 
     if (!success)
     {

@@ -13,13 +13,13 @@
  * @description 在图像中检测 2x4 排列的标定板角点，并转换到去畸变坐标系下
  * @param img 输入图像
  * @param max_sz 最大面积分数
- * @param fish_scale 鱼眼缩放因子
+ * @param config 相机配置参数结构体
  * @param detect_points 检测到的角点坐标（输出）
  * @param fish_undis_flag 鱼眼去畸变标志
  * @param src_image_type 源图像类型
  * @return 是否成功检测到 8 个角点
  */
-bool detectPoints(cv::Mat img, float max_sz, float fish_scale, std::vector<cv::Point2f>& detect_points, int fish_undis_flag, ImageType src_image_type);
+bool detectPoints(cv::Mat img, float max_sz, const CameraConfig& config, std::vector<cv::Point2f>& detect_points, int fish_undis_flag, ImageType src_image_type);
 
 // 辅助检测与图像增强函数声明
 cv::Mat imgAugForPointDetect(const cv::Mat img, float contrast);
