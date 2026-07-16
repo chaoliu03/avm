@@ -3,12 +3,50 @@
  * @brief 图像拼接与融合模块实现
  */
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 #include "stitcher.h"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
 using namespace std;
 using namespace cv;
+
+#ifdef _WIN32
+/**
+ * @brief 将 UTF-8 编码的 std::string 转换为系统本地多字节编码（Windows 下为 GBK/ANSI）
+ * @description 解决 Windows 上 OpenCV 窗口标题中文乱码的问题
+ */
+static std::string utf8_to_gbk(const std::string& str)
+{
+    int len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
+    if (len <= 0) return "";
+    std::wstring wstr(len, 0);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wstr[0], len);
+
+    int len2 = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+    if (len2 <= 0) return "";
+    std::string gbk_str(len2, 0);
+    WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, &gbk_str[0], len2, NULL, NULL);
+
+    // 移除转换后字符串尾部冗余的 '\0' 字符，避免与 wstring 带来的长度不匹配
+    if (!gbk_str.empty() && gbk_str.back() == '\0')
+    {
+        gbk_str.pop_back();
+    }
+    return gbk_str;
+}
+#else
+static std::string utf8_to_gbk(const std::string& str)
+{
+    return str;
+}
+#endif
 
 // ========================================
 // 鸟瞰目标坐标初始化实现
@@ -425,4 +463,134 @@ void join()
     // 保存最终结果
     imwrite("build/stitched_result_with_su7.jpg", result);
     cout << "[成功] 全景图拼接完成，结果已保存：build/stitched_result_with_su7.jpg" << endl;
+}
+
+// 图像交互缩放与拖拽状态结构体
+struct PanZoomState
+{
+    cv::Mat     canvas;
+    double      scale              = 1.0;
+    cv::Point2d offset             = cv::Point2d(0, 0);
+    bool        is_dragging        = false;
+    cv::Point   drag_start_mouse;
+    cv::Point2d drag_start_offset;
+    std::string window_name;
+
+    void update_display()
+    {
+        cv::Mat display_img;
+        cv::Mat M = (cv::Mat_<double>(2, 3) << scale, 0, offset.x, 0, scale, offset.y);
+        cv::warpAffine(canvas, display_img, M, canvas.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(40, 40, 40));
+        cv::imshow(window_name, display_img);
+    }
+};
+
+// 鼠标交互回调函数
+static void onMouse(int event, int x, int y, int flags, void* userdata)
+{
+    PanZoomState* state = static_cast<PanZoomState*>(userdata);
+    if (!state)
+        return;
+
+    if (event == cv::EVENT_LBUTTONDOWN)
+    {
+        state->is_dragging        = true;
+        state->drag_start_mouse   = cv::Point(x, y);
+        state->drag_start_offset = state->offset;
+    }
+    else if (event == cv::EVENT_LBUTTONUP)
+    {
+        state->is_dragging = false;
+    }
+    else if (event == cv::EVENT_MOUSEMOVE)
+    {
+        if (state->is_dragging)
+        {
+            cv::Point   curr_mouse(x, y);
+            cv::Point   diff = curr_mouse - state->drag_start_mouse;
+            state->offset    = state->drag_start_offset + cv::Point2d(diff.x, diff.y);
+            state->update_display();
+        }
+    }
+    else if (event == cv::EVENT_MOUSEWHEEL)
+    {
+        // 获取滚轮缩放方向
+        int    delta  = cv::getMouseWheelDelta(flags);
+        double factor = (delta > 0) ? 1.1 : 0.9;
+
+        // 限制缩放比例在 0.1 到 10.0 之间
+        double new_scale = state->scale * factor;
+        if (new_scale < 0.1)
+            new_scale = 0.1;
+        if (new_scale > 10.0)
+            new_scale = 10.0;
+
+        // 以当前鼠标指针所在的窗口位置为中心进行平滑缩放
+        cv::Point2d mouse_pos(x, y);
+        state->offset = mouse_pos - (new_scale / state->scale) * (mouse_pos - state->offset);
+        state->scale  = new_scale;
+
+        state->update_display();
+    }
+}
+
+void showUndistortStitched(const cv::Mat& front, const cv::Mat& back, const cv::Mat& left, const cv::Mat& right)
+{
+    // 缩放单张图尺寸（原图较宽，缩放 4 倍为 496 x 372）
+    int w = front.cols / 4;
+    int h = front.rows / 4;
+
+    cv::Mat f_resized, b_resized, l_resized, r_resized;
+    cv::resize(front, f_resized, cv::Size(w, h));
+    cv::resize(back, b_resized, cv::Size(w, h));
+    cv::resize(left, l_resized, cv::Size(w, h));
+    cv::resize(right, r_resized, cv::Size(w, h));
+
+    // 旋转左右侧视图以纠正朝向，使得车头方向均朝上，车身均朝向中心：
+    // 左侧视图顺时针旋转 90 度，尺寸变为 h x w (372 x 496)
+    cv::Mat l_rotated;
+    // cv::rotate(l_resized, l_rotated, cv::ROTATE_90_CLOCKWISE);
+    cv::rotate(l_resized, l_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+    // 右侧视图逆时针旋转 90 度，尺寸变为 h x w (372 x 496)
+    cv::Mat r_rotated;
+    // cv::rotate(r_resized, r_rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+    cv::rotate(r_resized, r_rotated, cv::ROTATE_90_CLOCKWISE);
+
+    // 计算十字画布尺寸：
+    // 总宽度 = 左侧宽(h) + 中间宽(w) + 右侧宽(h) = 372 + 496 + 372 = 1240
+    // 总高度 = 前向高(h) + 中间高(w) + 后向高(h) = 372 + 496 + 372 = 1240
+    int canvas_w = h + w + h;
+    int canvas_h = h + w + h;
+    cv::Mat canvas(canvas_h, canvas_w, CV_8UC3, cv::Scalar(40, 40, 40));
+
+    // 拼入前视图 (中上)：宽度 w，高度 h
+    f_resized.copyTo(canvas(cv::Rect(h, 0, w, h)));
+
+    // 拼入左视图 (左中)：宽度 h，高度 w
+    l_rotated.copyTo(canvas(cv::Rect(0, h, h, w)));
+
+    // 拼入右视图 (右中)：宽度 h，高度 w
+    r_rotated.copyTo(canvas(cv::Rect(h + w, h, h, w)));
+
+    // 拼入后视图 (中下)：宽度 w，高度 h
+    b_resized.copyTo(canvas(cv::Rect(h, h + w, w, h)));
+
+    // 实例化并初始化交互状态
+    PanZoomState state;
+    state.canvas      = canvas;
+    state.window_name = utf8_to_gbk("去畸变方位拼接展示 (鼠标滚轮缩放，左键拖拽平移，按任意键继续)");
+    state.scale       = 1.0;
+    state.offset      = cv::Point2d(0, 0);
+
+    // 创建窗口并设置鼠标监听回调
+    cv::namedWindow(state.window_name, cv::WINDOW_AUTOSIZE);
+    cv::setMouseCallback(state.window_name, onMouse, &state);
+
+    // 绘制初始图像
+    state.update_display();
+
+    // 等待按键关闭
+    cv::waitKey(0);
+    cv::destroyWindow(state.window_name);
 }

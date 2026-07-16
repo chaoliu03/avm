@@ -115,12 +115,15 @@ int main()
     cv::Mat left_undis  = undistort_handle.undistort_func(image_l, undis2dis_left);
     cv::Mat right_undis = undistort_handle.undistort_func(image_r, undis2dis_right);
 
-    // 保存去畸变图像
-    cv::imwrite("build/front_undis.jpg", front_undis);
-    cv::imwrite("build/back_undis.jpg", back_undis);
-    cv::imwrite("build/left_undis.jpg", left_undis);
-    cv::imwrite("build/right_undis.jpg", right_undis);
-    cout << "[成功] 去畸变图像处理完成并已保存" << endl;
+    // 复制一份干净的去畸变图像（没有绘制角点绿色圆圈）用于展示与鸟瞰图透视变换
+    cv::Mat clean_front = front_undis.clone();
+    cv::Mat clean_back  = back_undis.clone();
+    cv::Mat clean_left  = left_undis.clone();
+    cv::Mat clean_right = right_undis.clone();
+
+    // 拼接四张去畸变图像方位并利用窗口显示出来
+    showUndistortStitched(clean_front, clean_back, clean_left, clean_right);
+    cout << "[成功] 去畸变图像方位拼接显示完成" << endl;
 
     // 检测标定板角点
     cout << "[步骤 3] 正在检测标定板角点..." << endl;
@@ -158,12 +161,6 @@ int main()
     // 初始化鸟瞰图参数
     init_params();
 
-    // 重新读取去畸变图像用于透视变换
-    cv::Mat undisimage_f = imread("build/front_undis.jpg");
-    cv::Mat undisimage_b = imread("build/back_undis.jpg");
-    cv::Mat undisimage_l = imread("build/left_undis.jpg");
-    cv::Mat undisimage_r = imread("build/right_undis.jpg");
-
     // 计算单应性矩阵
     cout << "[步骤 4] 正在计算透视变换矩阵..." << endl;
     g_Homo_F = cv::findHomography(g_corner_front, g_corner_bird_front, 0);
@@ -176,10 +173,10 @@ int main()
     cout << "[步骤 5] 正在生成鸟瞰图..." << endl;
     cv::Mat bird_front_image, bird_back_image, bird_left_image, bird_right_image;
 
-    cv::warpPerspective(undisimage_f, bird_front_image, g_Homo_F, cv::Size(792, 305), cv::INTER_LINEAR);
-    cv::warpPerspective(undisimage_b, bird_back_image, g_Homo_B, cv::Size(792, 305), cv::INTER_LINEAR);
-    cv::warpPerspective(undisimage_l, bird_left_image, g_Homo_L, cv::Size(1131, 281), cv::INTER_LINEAR);
-    cv::warpPerspective(undisimage_r, bird_right_image, g_Homo_R, cv::Size(1131, 281), cv::INTER_LINEAR);
+    cv::warpPerspective(clean_front, bird_front_image, g_Homo_F, cv::Size(792, 305), cv::INTER_LINEAR);
+    cv::warpPerspective(clean_back, bird_back_image, g_Homo_B, cv::Size(792, 305), cv::INTER_LINEAR);
+    cv::warpPerspective(clean_left, bird_left_image, g_Homo_L, cv::Size(1131, 281), cv::INTER_LINEAR);
+    cv::warpPerspective(clean_right, bird_right_image, g_Homo_R, cv::Size(1131, 281), cv::INTER_LINEAR);
 
     // 保存初始鸟瞰图图像
     cv::imwrite("build/bird_front.jpg", bird_front_image);
