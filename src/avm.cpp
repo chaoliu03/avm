@@ -26,13 +26,13 @@ const std::string OUTPUT_DIR = "output";
 
 // 全局默认相机配置定义
 const CameraConfig g_default_camera_config(
-    0.43f,                                                      // fish_scale
-    910.0f,                                                     // focal_length
-    3.0f,                                                       // dx
-    3.0f,                                                       // dy
-    1280,                                                       // fish_width
-    960,                                                        // fish_height
-    1.55f,                                                      // undis_scale
+    0.43f,
+    910.0f,
+    3.0f,
+    3.0f,
+    1280,
+    960,
+    1.55f,
     cv::Vec4d(-0.05611147, -0.05377447, 0.0115717, 0.0030788),  // fish2undis_params
     cv::Vec4d(0.18238692, -0.08579553, 0.03366532, -0.00561911) // undis2fish_params
 );
@@ -136,13 +136,14 @@ int main()
     cout << "[步骤 3] 正在检测标定板角点..." << endl;
     cv::Mat contrast_f, contrast_b, contrast_l, contrast_r;
     cv::Mat thresh_f, thresh_b, thresh_l, thresh_r;
-    bool success = true;
-    success &= detectPoints(image_f, 20000, g_default_camera_config, g_corner_front, 0, ImageType::IMAGE_FRONT, &contrast_f, &thresh_f);
-    success &= detectPoints(image_b, 20000, g_default_camera_config, g_corner_back, 0, ImageType::IMAGE_BACK, &contrast_b, &thresh_b);
-    success &= detectPoints(image_l, 20000, g_default_camera_config, g_corner_left, 0, ImageType::IMAGE_LEFT, &contrast_l, &thresh_l);
-    success &= detectPoints(image_r, 20000, g_default_camera_config, g_corner_right, 0, ImageType::IMAGE_RIGHT, &contrast_r, &thresh_r);
 
-    if (!success)
+    bool is_detect_points_succ = true;
+    is_detect_points_succ &= detectPoints(image_f, 20000, g_default_camera_config, g_corner_front, 0, ImageType::IMAGE_FRONT, &contrast_f, &thresh_f);
+    is_detect_points_succ &= detectPoints(image_b, 20000, g_default_camera_config, g_corner_back, 0, ImageType::IMAGE_BACK, &contrast_b, &thresh_b);
+    is_detect_points_succ &= detectPoints(image_l, 20000, g_default_camera_config, g_corner_left, 0, ImageType::IMAGE_LEFT, &contrast_l, &thresh_l);
+    is_detect_points_succ &= detectPoints(image_r, 20000, g_default_camera_config, g_corner_right, 0, ImageType::IMAGE_RIGHT, &contrast_r, &thresh_r);
+
+    if (!is_detect_points_succ)
     {
         cout << "[错误] 部分方向的标定板角点检测失败！" << endl;
         cout << "[提示] 请检查 `fish_scale` 缩放因子设置是否过小（当前为 " << g_default_camera_config.fish_scale
@@ -231,8 +232,8 @@ int main()
     cv::Mat final_result = join(bird_front_rotated, bird_back_rotated, bird_left_rotated, bird_right_rotated);
 
     // 显示最终的全景环视大图
-    PanZoomState state6;
-    showInteractive(final_result, state6, "6_最终全景拼接 (鼠标滚轮缩放，左键拖拽平移)");
+    // PanZoomState state6;
+    // showInteractive(final_result, state6, "6_最终全景拼接 (鼠标滚轮缩放，左键拖拽平移)");
 
     cout << "===========================================" << endl;
     cout << "[系统] 环视全景系统处理完成" << endl;

@@ -45,15 +45,15 @@ static void icvGradientOfHistogram256(const ArrayContainer& piHist,
 }
 
 template <int iWidth_, typename ArrayContainer>
-static void icvSmoothHistogram256(const ArrayContainer& piHist,
-    ArrayContainer&                                     piHistSmooth,
-    int                                                 iWidth = 0)
+static void icvSmoothHistogram256(const ArrayContainer& piHist, ArrayContainer& piHistSmooth, int iWidth = 0)
 {
     CV_DbgAssert(iWidth_ == 0 || (iWidth == iWidth_ || iWidth == 0));
     iWidth = (iWidth_ != 0) ? iWidth_ : iWidth;
     CV_Assert(iWidth > 0);
     CV_DbgAssert(piHist.size() == 256);
     CV_DbgAssert(piHistSmooth.size() == 256);
+
+    cout << "iWidth: " << iWidth << endl;
 
     for (int i = 0; i < 256; ++i)
     {
@@ -71,8 +71,7 @@ static void icvSmoothHistogram256(const ArrayContainer& piHist,
 }
 
 template <typename ArrayContainer>
-static void icvGetIntensityHistogram256(const cv::Mat& img,
-    ArrayContainer&                                    piHist)
+static void icvGetIntensityHistogram256(const cv::Mat& img, ArrayContainer& piHist)
 {
     // 初始化直方图
     for (int i = 0; i < 256; i++)
