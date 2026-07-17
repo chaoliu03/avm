@@ -1,0 +1,18 @@
+{
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "C_Cpp.errorSquiggles": "disabled",
+  "clangd.fallbackFlags": [
+    "-IC:\\PROJ\\vcpkg\\vcpkg\\installed\\x64-windows\\include\\opencv4",
+    "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+  ],
+  "git.addAICoAuthor": "off",
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "请始终使用中文生成提交信息，并符合 conventional commits 规范。"
+    }
+  ],
+  "github.copilot.chat.localeOverride": "zh-cn",
+  "gcmp.commit.language": "chinese",
+  "gcmp.commit.customInstructions": "请始终使用中文生成提交信息",
+  "QoderCN.PreferredLanguage forCommitMessage": "简体中文"
+}
